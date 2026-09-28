@@ -69,6 +69,12 @@ h1 {
   border-color: #1f1f1f;
 }
 
+.actions .danger {
+  color: #8b2f2f;
+  border-color: #d8bcbc;
+  background: #fffafa;
+}
+
 .workspace {
   max-width: 1540px;
   margin: 0 auto;
@@ -191,7 +197,7 @@ h1 {
 }
 
 .items .unitCol {
-  width: 64px;
+  width: 92px;
   text-align: center;
 }
 
