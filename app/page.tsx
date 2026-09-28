@@ -150,8 +150,9 @@ export default function Home() {
 
       <div className="workspace">
         <section className="paper">
+          <div className="printTitle">請 求 書</div>
           <div className="paperHeader">
-            <div>
+            <div className="customerPicker">
               <label>請求先</label>
               <select value={customer} onChange={(e) => setCustomer(e.target.value)}>
                 <option value="">選択してください</option>
