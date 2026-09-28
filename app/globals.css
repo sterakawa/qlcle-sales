@@ -689,3 +689,110 @@ h1 {
     display: none !important;
   }
 }
+
+
+.itemDescriptionPrint {
+  display: none;
+}
+
+@media print {
+  .paper {
+    position: relative;
+    padding-bottom: 31mm;
+  }
+
+  .itemDescription {
+    display: none !important;
+  }
+
+  .itemDescriptionPrint {
+    display: block;
+    margin-top: 0.8mm;
+    font-size: 7.5pt;
+    line-height: 1.25;
+    color: #666;
+    white-space: pre-wrap;
+  }
+
+  .paymentSection {
+    position: absolute;
+    left: 12mm;
+    right: 12mm;
+    bottom: 7mm;
+    margin-top: 0;
+  }
+
+  .paper.printDense {
+    padding-top: 7mm;
+  }
+
+  .paper.printDense .printTitle {
+    font-size: 16pt;
+    margin-bottom: 3mm;
+  }
+
+  .paper.printDense .companyRow {
+    margin-top: 2mm;
+    padding: 2.5mm 0;
+  }
+
+  .paper.printDense .company {
+    font-size: 7.5pt;
+    line-height: 1.3;
+  }
+
+  .paper.printDense .subjectRow {
+    margin-top: 2.5mm;
+  }
+
+  .paper.printDense .subMeta {
+    margin: 2mm 0 3mm;
+  }
+
+  .paper.printDense .items th,
+  .paper.printDense .items td {
+    padding-top: 1.1mm;
+    padding-bottom: 1.1mm;
+  }
+
+  .paper.printDense .itemName {
+    font-size: 9pt;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .paper.printDense .itemDescriptionPrint {
+    margin-top: 0.4mm;
+    font-size: 7pt;
+    line-height: 1.15;
+  }
+
+  .paper.printDense .amount {
+    padding-top: 2mm !important;
+  }
+
+  .paper.printDense .items tbody td:nth-child(2),
+  .paper.printDense .items tbody td:nth-child(3),
+  .paper.printDense .items tbody td:nth-child(4),
+  .paper.printDense .items tbody td:nth-child(5) {
+    padding-top: 1.6mm;
+  }
+
+  .paper.printDense .totals {
+    margin-top: 3mm;
+  }
+
+  .paper.printDense .totals > div {
+    padding: 1mm 0;
+  }
+
+  .paper.printDense .notes {
+    margin-top: 3mm;
+  }
+
+  .paper.printDense .bankBox,
+  .paper.printDense .paymentNote {
+    padding: 2mm 2.5mm;
+    font-size: 7.5pt;
+  }
+}
