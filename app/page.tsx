@@ -30,9 +30,16 @@ const itemPresets = [
 const unitOptions = ["日", "イベント", "式", "人", "名", "台", "会場", "レーン", "枚", "時間"];
 
 const sampleInvoices = [
-  "2026/09/28　株式会社マイナビ",
-  "2026/09/18　株式会社○○イベント",
-  "2026/09/05　△△株式会社",
+  { date: "09/28", customer: "株式会社マイナビ" },
+  { date: "09/24", customer: "株式会社○○イベント" },
+  { date: "09/21", customer: "△△株式会社" },
+  { date: "09/18", customer: "株式会社サンプル" },
+  { date: "09/15", customer: "□□株式会社" },
+  { date: "09/12", customer: "株式会社テスト" },
+  { date: "09/09", customer: "○○企画株式会社" },
+  { date: "09/06", customer: "株式会社イベントラボ" },
+  { date: "09/03", customer: "株式会社デモ" },
+  { date: "09/01", customer: "株式会社サンプル東京" },
 ];
 
 function lineAmount(item: LineItem) {
@@ -346,18 +353,21 @@ export default function Home() {
             <button>検索</button>
           </div>
           <div className="binderMonth">2026年9月</div>
-          {sampleInvoices.map((invoice, index) => (
-            <button
-              className={"binderTab " + (index === 0 ? "active" : "")}
-              key={invoice}
-            >
-              {invoice}
-            </button>
-          ))}
+          <div className="binderList">
+            {sampleInvoices.map((invoice, index) => (
+              <button
+                className={"binderTab " + (index === 0 ? "active" : "")}
+                key={invoice.date + invoice.customer}
+              >
+                <span className="binderDate">2026/{invoice.date}</span>
+                <span className="binderCustomer">{invoice.customer}</span>
+              </button>
+            ))}
+          </div>
           <div className="binderNav">
-            <button>‹ 前へ</button>
-            <span>1 / 3</span>
-            <button>次へ ›</button>
+            <button>‹ 前月</button>
+            <span>2026年9月</span>
+            <button>次月 ›</button>
           </div>
         </aside>
       </div>
