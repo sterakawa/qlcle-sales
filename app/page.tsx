@@ -2,24 +2,32 @@
 
 import { useMemo, useState } from "react";
 
+type CalculationType = "standard" | "lane";
+
 type LineItem = {
   id: number;
   name: string;
+  description: string;
   quantity: number;
+  unit: string;
+  lanes: number;
   unitPrice: number;
+  calculationType: CalculationType;
 };
 
 const itemPresets = [
-  { name: "SPIXD 基本料金", unitPrice: 80000 },
-  { name: "WEBカスタマイズ", unitPrice: 20000 },
-  { name: "レシートカスタマイズ", unitPrice: 20000 },
-  { name: "フレーム制作", unitPrice: 20000 },
-  { name: "オペレーター費", unitPrice: 30000 },
-  { name: "カメラマン費", unitPrice: 40000 },
-  { name: "交通費", unitPrice: 0 },
-  { name: "搬入・テスト稼働費", unitPrice: 0 },
-  { name: "機材費", unitPrice: 0 },
+  { name: "SPIXD 基本料金", unitPrice: 80000, unit: "日", calculationType: "lane" as CalculationType },
+  { name: "WEBカスタマイズ", unitPrice: 20000, unit: "イベント", calculationType: "standard" as CalculationType },
+  { name: "レシートカスタマイズ", unitPrice: 20000, unit: "イベント", calculationType: "standard" as CalculationType },
+  { name: "フレーム制作", unitPrice: 20000, unit: "イベント", calculationType: "standard" as CalculationType },
+  { name: "オペレーター費", unitPrice: 30000, unit: "人", calculationType: "standard" as CalculationType },
+  { name: "カメラマン費", unitPrice: 40000, unit: "人", calculationType: "standard" as CalculationType },
+  { name: "交通費", unitPrice: 0, unit: "式", calculationType: "standard" as CalculationType },
+  { name: "搬入・テスト稼働費", unitPrice: 0, unit: "式", calculationType: "standard" as CalculationType },
+  { name: "機材費", unitPrice: 0, unit: "台", calculationType: "standard" as CalculationType },
 ];
+
+const unitOptions = ["日", "イベント", "式", "人", "名", "台", "会場", "レーン", "枚", "時間"];
 
 const sampleInvoices = [
   "2026/09/28　株式会社マイナビ",
@@ -27,16 +35,53 @@ const sampleInvoices = [
   "2026/09/05　△△株式会社",
 ];
 
+function lineAmount(item: LineItem) {
+  const multiplier = item.calculationType === "lane" ? item.lanes : 1;
+  return item.quantity * multiplier * item.unitPrice;
+}
+
+function blankItem(): LineItem {
+  return {
+    id: Date.now() + Math.random(),
+    name: "",
+    description: "",
+    quantity: 1,
+    unit: "式",
+    lanes: 1,
+    unitPrice: 0,
+    calculationType: "standard",
+  };
+}
+
 export default function Home() {
   const [customer, setCustomer] = useState("株式会社マイナビ");
   const [subject, setSubject] = useState("イベント運営費");
   const [invoiceNo, setInvoiceNo] = useState("2026-001");
   const [items, setItems] = useState<LineItem[]>([
-    { id: 1, name: "SPIXD 基本料金", quantity: 1, unitPrice: 80000 },
+    {
+      id: 1,
+      name: "SPIXD 基本料金",
+      description: "同日、東京・大阪の2会場にて実施",
+      quantity: 1,
+      unit: "日",
+      lanes: 2,
+      unitPrice: 80000,
+      calculationType: "lane",
+    },
+    {
+      id: 2,
+      name: "WEBカスタマイズ",
+      description: "HPへのリンク設置、ロゴ・タイトル反映",
+      quantity: 1,
+      unit: "イベント",
+      lanes: 1,
+      unitPrice: 20000,
+      calculationType: "standard",
+    },
   ]);
 
   const subtotal = useMemo(
-    () => items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0),
+    () => items.reduce((sum, item) => sum + lineAmount(item), 0),
     [items]
   );
   const tax = Math.floor(subtotal * 0.1);
@@ -49,10 +94,7 @@ export default function Home() {
   };
 
   const addItem = () => {
-    setItems((current) => [
-      ...current,
-      { id: Date.now(), name: "", quantity: 1, unitPrice: 0 },
-    ]);
+    setItems((current) => [...current, blankItem()]);
   };
 
   const removeItem = (id: number) => {
@@ -61,9 +103,16 @@ export default function Home() {
 
   const choosePreset = (id: number, name: string) => {
     const preset = itemPresets.find((item) => item.name === name);
+    if (!preset) {
+      updateItem(id, { name });
+      return;
+    }
     updateItem(id, {
       name,
-      unitPrice: preset?.unitPrice ?? 0,
+      unitPrice: preset.unitPrice,
+      unit: preset.unit,
+      calculationType: preset.calculationType,
+      lanes: preset.calculationType === "lane" ? 1 : 1,
     });
   };
 
@@ -71,7 +120,7 @@ export default function Home() {
     setCustomer("");
     setSubject("");
     setInvoiceNo("");
-    setItems([{ id: Date.now(), name: "", quantity: 1, unitPrice: 0 }]);
+    setItems([blankItem()]);
   };
 
   return (
@@ -153,27 +202,39 @@ export default function Home() {
           <table className="items">
             <thead>
               <tr>
-                <th>品名</th>
-                <th className="number">数量</th>
-                <th className="number">単価</th>
-                <th className="number">金額</th>
+                <th>品名・説明</th>
+                <th className="qtyCol">数量</th>
+                <th className="unitCol">単位</th>
+                <th className="laneCol">レーン</th>
+                <th className="priceCol">単価</th>
+                <th className="amountCol">金額</th>
                 <th className="small"></th>
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
                 <tr key={item.id}>
-                  <td>
+                  <td className="itemMain">
                     <input
+                      className="itemName"
                       list="item-presets"
                       value={item.name}
                       onChange={(e) => choosePreset(item.id, e.target.value)}
                       placeholder="項目を選択または入力"
                     />
+                    <textarea
+                      className="itemDescription"
+                      rows={2}
+                      value={item.description}
+                      onChange={(e) =>
+                        updateItem(item.id, { description: e.target.value })
+                      }
+                      placeholder="説明を入力（例：同日、東京・大阪の2会場にて実施）"
+                    />
                   </td>
                   <td>
                     <input
-                      className="number"
+                      className="number compact"
                       type="number"
                       min="0"
                       value={item.quantity}
@@ -183,8 +244,34 @@ export default function Home() {
                     />
                   </td>
                   <td>
+                    <select
+                      className="compact"
+                      value={item.unit}
+                      onChange={(e) => updateItem(item.id, { unit: e.target.value })}
+                    >
+                      {unitOptions.map((unit) => (
+                        <option key={unit}>{unit}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    {item.calculationType === "lane" ? (
+                      <input
+                        className="number compact"
+                        type="number"
+                        min="1"
+                        value={item.lanes}
+                        onChange={(e) =>
+                          updateItem(item.id, { lanes: Number(e.target.value) })
+                        }
+                      />
+                    ) : (
+                      <span className="notUsed">—</span>
+                    )}
+                  </td>
+                  <td>
                     <input
-                      className="number"
+                      className="number compact"
                       type="number"
                       min="0"
                       value={item.unitPrice}
@@ -194,7 +281,12 @@ export default function Home() {
                     />
                   </td>
                   <td className="amount">
-                    {(item.quantity * item.unitPrice).toLocaleString("ja-JP")}
+                    {lineAmount(item).toLocaleString("ja-JP")}
+                    {item.calculationType === "lane" && (
+                      <div className="calcHint">
+                        {item.quantity}{item.unit} × {item.lanes}レーン
+                      </div>
+                    )}
                   </td>
                   <td>
                     <button
