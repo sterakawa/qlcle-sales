@@ -1,0 +1,339 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #1b1b1b;
+  background: #e9e7e2;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.shell {
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.toolbar {
+  max-width: 1440px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: .16em;
+  color: #6c6c6c;
+}
+
+h1 {
+  margin: 2px 0 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actions button,
+.binder button,
+.addRow {
+  border: 1px solid #c8c5bf;
+  background: #fff;
+  border-radius: 8px;
+  padding: 9px 14px;
+}
+
+.actions .primary {
+  background: #1f1f1f;
+  color: #fff;
+  border-color: #1f1f1f;
+}
+
+.workspace {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(760px, 1fr) 290px;
+  gap: 18px;
+  align-items: start;
+}
+
+.paper {
+  background: #fff;
+  min-height: 980px;
+  padding: 48px 54px;
+  box-shadow: 0 12px 28px rgba(0,0,0,.08);
+}
+
+.paper label {
+  display: block;
+  font-size: 11px;
+  color: #666;
+}
+
+.paper input,
+.paper select,
+.paper textarea {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #bbb;
+  padding: 6px 4px;
+  background: transparent;
+  color: #111;
+}
+
+.paper input:focus,
+.paper select:focus,
+.paper textarea:focus {
+  outline: none;
+  border-bottom-color: #111;
+}
+
+.paperHeader,
+.companyRow {
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  gap: 44px;
+}
+
+.paperHeader select {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.companyRow {
+  margin-top: 34px;
+  padding: 22px 0;
+  border-top: 1px solid #222;
+  border-bottom: 1px solid #222;
+}
+
+.recipient {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 20px;
+}
+
+.company {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.subjectRow {
+  margin-top: 24px;
+}
+
+.subjectRow input {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.subMeta {
+  margin: 18px 0 28px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.items {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.items th,
+.items td {
+  border-bottom: 1px solid #d0d0d0;
+  padding: 8px 6px;
+  text-align: left;
+}
+
+.items th {
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+}
+
+.items .number {
+  width: 120px;
+  text-align: right;
+}
+
+.items .small {
+  width: 40px;
+}
+
+.amount {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.iconButton {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: #f1f1f1;
+}
+
+.addRow {
+  margin-top: 12px;
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
+.totals {
+  width: 340px;
+  margin: 34px 0 0 auto;
+}
+
+.totals > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.totals .grandTotal {
+  margin-top: 4px;
+  font-size: 20px;
+  border-bottom: 3px double #222;
+}
+
+.notes {
+  margin-top: 44px;
+}
+
+.binder {
+  position: sticky;
+  top: 20px;
+  min-height: 720px;
+  background: #d8d1c3;
+  border-radius: 4px 12px 12px 4px;
+  padding: 18px 0 18px 18px;
+  box-shadow: 0 10px 20px rgba(0,0,0,.08);
+}
+
+.binderTop {
+  padding: 0 18px 14px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.binderTop button {
+  padding: 6px 9px;
+  font-size: 11px;
+}
+
+.binderMonth {
+  font-size: 12px;
+  color: #5a554c;
+  padding: 8px 12px 8px 4px;
+}
+
+.binderTab {
+  width: 100%;
+  display: block;
+  text-align: left;
+  margin: 0 0 7px;
+  border-radius: 8px 0 0 8px !important;
+  border-right: 0 !important;
+  padding: 13px 12px !important;
+  font-size: 12px;
+}
+
+.binderTab.active {
+  transform: translateX(-7px);
+  box-shadow: 0 4px 8px rgba(0,0,0,.08);
+  font-weight: 600;
+}
+
+.binderNav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 18px 0 0;
+  font-size: 12px;
+}
+
+.binderNav button {
+  padding: 6px 9px;
+  font-size: 11px;
+}
+
+@media (max-width: 1050px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .binder {
+    position: static;
+    min-height: auto;
+  }
+}
+
+@media print {
+  :root {
+    background: #fff;
+  }
+
+  .shell {
+    padding: 0;
+  }
+
+  .toolbar,
+  .binder,
+  .addRow,
+  .iconButton {
+    display: none !important;
+  }
+
+  .workspace {
+    display: block;
+  }
+
+  .paper {
+    min-height: auto;
+    box-shadow: none;
+    padding: 12mm;
+  }
+
+  input,
+  select,
+  textarea {
+    appearance: none;
+  }
+}
