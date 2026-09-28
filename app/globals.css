@@ -173,8 +173,8 @@ h1 {
 
 .items th,
 .items td {
-  border-bottom: 1px solid #d0d0d0;
-  padding: 10px 6px;
+  border-bottom: 1px solid #d8d8d8;
+  padding: 9px 5px;
   text-align: left;
   vertical-align: top;
 }
@@ -186,23 +186,27 @@ h1 {
 }
 
 .items .qtyCol {
-  width: 72px;
+  width: 58px;
+  text-align: center;
 }
 
 .items .unitCol {
-  width: 88px;
+  width: 64px;
+  text-align: center;
 }
 
 .items .laneCol {
-  width: 72px;
+  width: 66px;
+  text-align: center;
 }
 
 .items .priceCol {
-  width: 116px;
+  width: 108px;
+  text-align: right;
 }
 
 .items .amountCol {
-  width: 126px;
+  width: 132px;
   text-align: right;
 }
 
@@ -211,21 +215,31 @@ h1 {
 }
 
 .itemMain {
-  padding-right: 12px !important;
+  padding-right: 22px !important;
 }
 
 .itemName {
   font-weight: 600;
+  font-size: 15px;
+  padding-top: 2px !important;
+  padding-bottom: 4px !important;
 }
 
 .itemDescription {
-  margin-top: 4px;
+  margin-top: 1px;
   resize: vertical;
-  min-height: 48px;
-  font-size: 12px;
+  min-height: 34px;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  font-size: 11px;
   line-height: 1.45;
-  color: #666 !important;
-  border-bottom-color: #e3e3e3 !important;
+  color: #6f6f6f !important;
+  border-bottom-color: transparent !important;
+}
+
+.itemDescription:hover,
+.itemDescription:focus {
+  border-bottom-color: #d8d8d8 !important;
 }
 
 .number {
@@ -234,25 +248,59 @@ h1 {
 
 .compact {
   min-width: 0;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+}
+
+.items td:nth-child(2) input,
+.items td:nth-child(3) select,
+.items td:nth-child(4) input {
+  text-align: center;
+}
+
+.items td:nth-child(5) input {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .amount {
   text-align: right !important;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  font-weight: 600;
+  padding-top: 14px !important;
 }
 
 .calcHint {
-  margin-top: 6px;
-  font-size: 10px;
-  color: #777;
+  margin-top: 3px;
+  font-size: 9px;
+  font-weight: 400;
+  color: #888;
 }
 
 .notUsed {
   display: block;
   text-align: center;
-  color: #aaa;
-  padding-top: 7px;
+  color: #bbb;
+  padding-top: 8px;
+}
+
+.items tbody td:nth-child(2),
+.items tbody td:nth-child(3),
+.items tbody td:nth-child(4),
+.items tbody td:nth-child(5) {
+  padding-top: 12px;
+}
+
+.items thead th:nth-child(2),
+.items thead th:nth-child(3),
+.items thead th:nth-child(4) {
+  text-align: center;
+}
+
+.items thead th:nth-child(5),
+.items thead th:nth-child(6) {
+  text-align: right;
 }
 
 .iconButton {
