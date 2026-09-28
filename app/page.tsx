@@ -149,7 +149,7 @@ export default function Home() {
       </header>
 
       <div className="workspace">
-        <section className="paper">
+        <section className={`paper ${items.length >= 6 ? "printDense" : ""}`}>
           <div className="printTitle">請 求 書</div>
           <div className="paperHeader">
             <div className="customerPicker">
@@ -243,6 +243,9 @@ export default function Home() {
                       }
                       placeholder="説明を入力（例：同日、東京・大阪の2会場にて実施）"
                     />
+                    {item.description && (
+                      <div className="itemDescriptionPrint">{item.description}</div>
+                    )}
                   </td>
                   <td>
                     <input
