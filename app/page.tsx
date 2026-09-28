@@ -134,6 +134,7 @@ export default function Home() {
           <button onClick={resetInvoice}>新規</button>
           <button>保存</button>
           <button>複製</button>
+          <button className="danger">破棄</button>
           <button className="primary" onClick={() => window.print()}>
             PDF / 印刷
           </button>
