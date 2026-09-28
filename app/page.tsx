@@ -175,8 +175,11 @@ export default function Home() {
             </div>
             <div className="company">
               <strong>株式会社QLCLE</strong>
-              <span>会社情報・住所・登録番号は固定設定から表示</span>
-              <span>振込先情報も固定設定として管理</span>
+              <span>代表取締役　寺川美鈴</span>
+              <span>〒105-0011</span>
+              <span>東京都港区芝公園2丁目11番13号</span>
+              <span>TEL 03-5733-6528</span>
+              <span>登録番号 T8010401110141</span>
             </div>
           </div>
 
@@ -322,6 +325,18 @@ export default function Home() {
           <div className="notes">
             <label>備考</label>
             <textarea rows={3} placeholder="必要な場合のみ入力" />
+          </div>
+
+          <div className="paymentSection">
+            <div className="bankBox">
+              <div><span>振込先：</span><strong>みずほ銀行　神谷町支店</strong></div>
+              <div><span>口座：</span><strong>普通預金　1327393</strong></div>
+              <div><span>口座名義：</span><strong>株式会社 QLCLE（クルクル）</strong></div>
+            </div>
+            <div className="paymentNote">
+              左記口座にご請求金額のお振込み願いします。<br />
+              尚、お振込み手数料はお客さまご負担にてお願い致します。
+            </div>
           </div>
         </section>
 
