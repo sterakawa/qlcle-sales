@@ -29,7 +29,7 @@ button {
 }
 
 .toolbar {
-  max-width: 1440px;
+  max-width: 1540px;
   margin: 0 auto 16px;
   display: flex;
   align-items: end;
@@ -70,10 +70,10 @@ h1 {
 }
 
 .workspace {
-  max-width: 1440px;
+  max-width: 1540px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(760px, 1fr) 290px;
+  grid-template-columns: minmax(900px, 1fr) 290px;
   gap: 18px;
   align-items: start;
 }
@@ -174,8 +174,9 @@ h1 {
 .items th,
 .items td {
   border-bottom: 1px solid #d0d0d0;
-  padding: 8px 6px;
+  padding: 10px 6px;
   text-align: left;
+  vertical-align: top;
 }
 
 .items th {
@@ -184,8 +185,24 @@ h1 {
   color: #555;
 }
 
-.items .number {
-  width: 120px;
+.items .qtyCol {
+  width: 72px;
+}
+
+.items .unitCol {
+  width: 88px;
+}
+
+.items .laneCol {
+  width: 72px;
+}
+
+.items .priceCol {
+  width: 116px;
+}
+
+.items .amountCol {
+  width: 126px;
   text-align: right;
 }
 
@@ -193,9 +210,49 @@ h1 {
   width: 40px;
 }
 
+.itemMain {
+  padding-right: 12px !important;
+}
+
+.itemName {
+  font-weight: 600;
+}
+
+.itemDescription {
+  margin-top: 4px;
+  resize: vertical;
+  min-height: 48px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #666 !important;
+  border-bottom-color: #e3e3e3 !important;
+}
+
+.number {
+  text-align: right;
+}
+
+.compact {
+  min-width: 0;
+}
+
 .amount {
   text-align: right !important;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.calcHint {
+  margin-top: 6px;
+  font-size: 10px;
+  color: #777;
+}
+
+.notUsed {
+  display: block;
+  text-align: center;
+  color: #aaa;
+  padding-top: 7px;
 }
 
 .iconButton {
@@ -294,7 +351,7 @@ h1 {
   font-size: 11px;
 }
 
-@media (max-width: 1050px) {
+@media (max-width: 1180px) {
   .workspace {
     grid-template-columns: 1fr;
   }
@@ -335,5 +392,9 @@ h1 {
   select,
   textarea {
     appearance: none;
+  }
+
+  .itemDescription {
+    resize: none;
   }
 }
