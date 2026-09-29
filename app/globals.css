@@ -860,3 +860,42 @@ h1 {
     border-top-color: #f2f2f2 !important;
   }
 }
+
+
+/* Print refinement: remove form-field underlines and keep only structural separators. */
+@media print {
+  .items input,
+  .items select,
+  .items textarea {
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .items tbody td {
+    border: 0 !important;
+  }
+
+  .items tbody tr + tr td {
+    border-top: 0.35pt solid #e5e5e5 !important;
+  }
+
+  .items thead th {
+    border-bottom: 0.8pt solid #9a9a9a !important;
+  }
+
+  .items .notUsed {
+    padding-top: 0 !important;
+  }
+
+  .items select {
+    background-image: none !important;
+  }
+
+  .totals > div {
+    border-bottom: 0 !important;
+  }
+
+  .totals .grandTotal {
+    border-bottom: 1.2pt solid #222 !important;
+  }
+}
