@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";
 
 type CalculationType = "standard" | "lane";
 type DocumentType = "invoice" | "estimate" | "delivery";
@@ -110,6 +112,12 @@ function blankItem(): LineItem {
 }
 
 export default function Home() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const [documentType, setDocumentType] = useState<DocumentType>("invoice");
   const config = documentConfig[documentType];
   const [customer, setCustomer] = useState("株式会社マイナビ");
@@ -137,6 +145,42 @@ export default function Home() {
       calculationType: "standard",
     },
   ]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setAuthLoading(false);
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleLogin = async (event: FormEvent) => {
+    event.preventDefault();
+    setAuthError("");
+    setAuthLoading(true);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setAuthError("メールアドレスまたはパスワードを確認してください。");
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + lineAmount(item), 0),
@@ -181,6 +225,49 @@ export default function Home() {
     setItems([blankItem()]);
   };
 
+  if (authLoading && !session) {
+    return (
+      <main className="authShell">
+        <div className="authCard">接続中...</div>
+      </main>
+    );
+  }
+
+  if (!session) {
+    return (
+      <main className="authShell">
+        <form className="authCard" onSubmit={handleLogin}>
+          <div className="eyebrow">QLCLE SALES</div>
+          <h1>ログイン</h1>
+          <label>
+            メールアドレス
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              required
+            />
+          </label>
+          <label>
+            パスワード
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+          </label>
+          {authError && <div className="authError">{authError}</div>}
+          <button className="primary" type="submit" disabled={authLoading}>
+            {authLoading ? "ログイン中..." : "ログイン"}
+          </button>
+        </form>
+      </main>
+    );
+  }
+
   return (
     <main className="shell">
       <header className="toolbar">
@@ -195,6 +282,7 @@ export default function Home() {
         </div>
         <div className="actions">
           <button onClick={resetInvoice}>新規</button>
+          <button onClick={handleLogout}>ログアウト</button>
           <button>保存</button>
           <button>複製</button>
           <button className="danger">破棄</button>
