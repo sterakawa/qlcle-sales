@@ -796,3 +796,47 @@ h1 {
     font-size: 7.5pt;
   }
 }
+
+
+/* Print layout correction: keep payment details in normal flow.
+   Absolute positioning caused awkward vertical gaps and unstable page layout. */
+@media print {
+  .paper {
+    position: static !important;
+    min-height: 0 !important;
+    padding-bottom: 8mm !important;
+  }
+
+  .paymentSection {
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin-top: 6mm !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .paper.printDense .paymentSection {
+    margin-top: 4mm !important;
+  }
+
+  .notes:has(textarea:placeholder-shown) {
+    display: none !important;
+  }
+
+  .paper.printDense .items th,
+  .paper.printDense .items td {
+    padding-top: 0.9mm !important;
+    padding-bottom: 0.9mm !important;
+  }
+
+  .paper.printDense .itemDescriptionPrint {
+    font-size: 6.8pt;
+    line-height: 1.12;
+  }
+
+  .paper.printDense .totals {
+    margin-top: 2.5mm !important;
+  }
+}
