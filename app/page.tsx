@@ -3,6 +3,55 @@
 import { useMemo, useState } from "react";
 
 type CalculationType = "standard" | "lane";
+type DocumentType = "invoice" | "estimate" | "delivery";
+
+const documentConfig = {
+  invoice: {
+    title: "請求書",
+    printTitle: "請 求 書",
+    dateLabel: "請求日",
+    numberLabel: "請求番号",
+    subjectLabel: "請求件名",
+    binderLabel: "請求書バインダー",
+    firstMetaLabel: "受渡期日",
+    firstMetaPlaceholder: "例：2026年9月28日",
+    secondMetaLabel: "受渡場所",
+    secondMetaPlaceholder: "例：会場",
+    thirdMetaLabel: "支払条件",
+    thirdMetaPlaceholder: "例：月末締め翌月末払い",
+    showPayment: true,
+  },
+  estimate: {
+    title: "見積書",
+    printTitle: "見 積 書",
+    dateLabel: "見積日",
+    numberLabel: "見積番号",
+    subjectLabel: "見積件名",
+    binderLabel: "見積書バインダー",
+    firstMetaLabel: "有効期限",
+    firstMetaPlaceholder: "例：発行日より30日",
+    secondMetaLabel: "実施場所",
+    secondMetaPlaceholder: "例：会場",
+    thirdMetaLabel: "支払条件",
+    thirdMetaPlaceholder: "例：月末締め翌月末払い",
+    showPayment: false,
+  },
+  delivery: {
+    title: "納品書",
+    printTitle: "納 品 書",
+    dateLabel: "納品日",
+    numberLabel: "納品番号",
+    subjectLabel: "納品件名",
+    binderLabel: "納品書バインダー",
+    firstMetaLabel: "実施日",
+    firstMetaPlaceholder: "例：2026年9月28日",
+    secondMetaLabel: "納品場所",
+    secondMetaPlaceholder: "例：会場",
+    thirdMetaLabel: "備考",
+    thirdMetaPlaceholder: "必要な場合のみ入力",
+    showPayment: false,
+  },
+} as const;
 
 type LineItem = {
   id: number;
@@ -61,6 +110,8 @@ function blankItem(): LineItem {
 }
 
 export default function Home() {
+  const [documentType, setDocumentType] = useState<DocumentType>("invoice");
+  const config = documentConfig[documentType];
   const [customer, setCustomer] = useState("株式会社マイナビ");
   const [subject, setSubject] = useState("イベント運営費");
   const [invoiceNo, setInvoiceNo] = useState("2026-001");
@@ -135,7 +186,12 @@ export default function Home() {
       <header className="toolbar">
         <div>
           <div className="eyebrow">QLCLE SALES</div>
-          <h1>請求書</h1>
+          <h1>{config.title}</h1>
+          <div className="documentTabs">
+            <button className={documentType === "invoice" ? "active" : ""} onClick={() => setDocumentType("invoice")}>請求書</button>
+            <button className={documentType === "estimate" ? "active" : ""} onClick={() => setDocumentType("estimate")}>見積書</button>
+            <button className={documentType === "delivery" ? "active" : ""} onClick={() => setDocumentType("delivery")}>納品書</button>
+          </div>
         </div>
         <div className="actions">
           <button onClick={resetInvoice}>新規</button>
@@ -150,7 +206,7 @@ export default function Home() {
 
       <div className="workspace">
         <section className={`paper ${items.length >= 6 ? "printDense" : ""}`}>
-          <div className="printTitle">請 求 書</div>
+          <div className="printTitle">{config.printTitle}</div>
           <div className="paperHeader">
             <div className="customerPicker">
               <label>請求先</label>
@@ -163,11 +219,11 @@ export default function Home() {
             </div>
             <div className="metaGrid">
               <label>
-                請求日
+                {config.dateLabel}
                 <input type="date" defaultValue="2026-09-28" />
               </label>
               <label>
-                請求番号
+                {config.numberLabel}
                 <input
                   value={invoiceNo}
                   onChange={(e) => setInvoiceNo(e.target.value)}
@@ -192,22 +248,22 @@ export default function Home() {
           </div>
 
           <div className="subjectRow">
-            <label>請求件名</label>
+            <label>{config.subjectLabel}</label>
             <input value={subject} onChange={(e) => setSubject(e.target.value)} />
           </div>
 
           <div className="subMeta">
             <label>
-              受渡期日
-              <input type="text" placeholder="例：2026年9月28日" />
+              {config.firstMetaLabel}
+              <input type="text" placeholder={config.firstMetaPlaceholder} />
             </label>
             <label>
-              受渡場所
-              <input type="text" placeholder="例：会場" />
+              {config.secondMetaLabel}
+              <input type="text" placeholder={config.secondMetaPlaceholder} />
             </label>
             <label>
-              支払条件
-              <input type="text" placeholder="例：月末締め翌月末払い" />
+              {config.thirdMetaLabel}
+              <input type="text" placeholder={config.thirdMetaPlaceholder} />
             </label>
           </div>
 
@@ -359,22 +415,24 @@ export default function Home() {
             <textarea rows={3} placeholder="必要な場合のみ入力" />
           </div>
 
-          <div className="paymentSection">
-            <div className="bankBox">
-              <div><span>振込先：</span><strong>みずほ銀行　神谷町支店</strong></div>
-              <div><span>口座：</span><strong>普通預金　1327393</strong></div>
-              <div><span>口座名義：</span><strong>株式会社 QLCLE（クルクル）</strong></div>
+          {config.showPayment && (
+            <div className="paymentSection">
+              <div className="bankBox">
+                <div><span>振込先：</span><strong>みずほ銀行　神谷町支店</strong></div>
+                <div><span>口座：</span><strong>普通預金　1327393</strong></div>
+                <div><span>口座名義：</span><strong>株式会社 QLCLE（クルクル）</strong></div>
+              </div>
+              <div className="paymentNote">
+                左記口座にご請求金額のお振込み願いします。<br />
+                尚、お振込み手数料はお客さまご負担にてお願い致します。
+              </div>
             </div>
-            <div className="paymentNote">
-              左記口座にご請求金額のお振込み願いします。<br />
-              尚、お振込み手数料はお客さまご負担にてお願い致します。
-            </div>
-          </div>
+          )}
         </section>
 
         <aside className="binder">
           <div className="binderTop">
-            <span>請求書バインダー</span>
+            <span>{config.binderLabel}</span>
             <button>検索</button>
           </div>
           <div className="binderMonth">2026年9月</div>
