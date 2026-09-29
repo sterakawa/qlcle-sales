@@ -939,3 +939,26 @@ h1 {
     display: block;
   }
 }
+
+
+/* Print: lane controls are editing UI only. Leave non-lane cells blank. */
+@media print {
+  .laneToggle,
+  .laneAdd,
+  .laneCell button,
+  .items td button.laneToggle,
+  .items td button.laneAdd {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  .laneCell {
+    display: block !important;
+  }
+
+  .laneCell input {
+    border: 0 !important;
+    padding: 0 !important;
+    text-align: center !important;
+  }
+}
