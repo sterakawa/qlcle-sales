@@ -20,11 +20,11 @@ const itemPresets = [
   { name: "WEBカスタマイズ", unitPrice: 20000, unit: "イベント", calculationType: "standard" as CalculationType },
   { name: "レシートカスタマイズ", unitPrice: 20000, unit: "イベント", calculationType: "standard" as CalculationType },
   { name: "フレーム制作", unitPrice: 20000, unit: "イベント", calculationType: "standard" as CalculationType },
-  { name: "オペレーター費", unitPrice: 30000, unit: "人", calculationType: "standard" as CalculationType },
-  { name: "カメラマン費", unitPrice: 40000, unit: "人", calculationType: "standard" as CalculationType },
+  { name: "オペレーター費", unitPrice: 30000, unit: "日", calculationType: "lane" as CalculationType },
+  { name: "カメラマン費", unitPrice: 40000, unit: "日", calculationType: "lane" as CalculationType },
   { name: "交通費", unitPrice: 0, unit: "式", calculationType: "standard" as CalculationType },
   { name: "搬入・テスト稼働費", unitPrice: 0, unit: "式", calculationType: "standard" as CalculationType },
-  { name: "機材費", unitPrice: 0, unit: "台", calculationType: "standard" as CalculationType },
+  { name: "機材費", unitPrice: 0, unit: "日", calculationType: "lane" as CalculationType },
 ];
 
 const unitOptions = ["日", "イベント", "式", "人", "名", "台", "会場", "レーン", "枚", "時間"];
@@ -271,17 +271,38 @@ export default function Home() {
                   </td>
                   <td>
                     {item.calculationType === "lane" ? (
-                      <input
-                        className="number compact"
-                        type="number"
-                        min="1"
-                        value={item.lanes}
-                        onChange={(e) =>
-                          updateItem(item.id, { lanes: Number(e.target.value) })
-                        }
-                      />
+                      <div className="laneCell">
+                        <input
+                          className="number compact"
+                          type="number"
+                          min="1"
+                          value={item.lanes}
+                          onChange={(e) =>
+                            updateItem(item.id, { lanes: Number(e.target.value) })
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="laneToggle"
+                          title="レーン計算を使わない"
+                          onClick={() =>
+                            updateItem(item.id, { calculationType: "standard", lanes: 1 })
+                          }
+                        >
+                          ×
+                        </button>
+                      </div>
                     ) : (
-                      <span className="notUsed">—</span>
+                      <button
+                        type="button"
+                        className="laneAdd"
+                        title="レーン計算を使う"
+                        onClick={() =>
+                          updateItem(item.id, { calculationType: "lane", lanes: 1 })
+                        }
+                      >
+                        ＋
+                      </button>
                     )}
                   </td>
                   <td>
