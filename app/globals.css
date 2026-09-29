@@ -899,3 +899,43 @@ h1 {
     border-bottom: 1.2pt solid #222 !important;
   }
 }
+
+
+.laneCell {
+  display: grid;
+  grid-template-columns: 1fr 20px;
+  gap: 3px;
+  align-items: center;
+}
+
+.laneToggle,
+.laneAdd {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #888;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.laneToggle:hover,
+.laneAdd:hover {
+  color: #222;
+}
+
+.laneAdd {
+  width: 100%;
+  text-align: center;
+  padding-top: 7px;
+}
+
+@media print {
+  .laneToggle,
+  .laneAdd {
+    display: none !important;
+  }
+
+  .laneCell {
+    display: block;
+  }
+}
