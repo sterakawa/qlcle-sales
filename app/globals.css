@@ -962,3 +962,18 @@ h1 {
     text-align: center !important;
   }
 }
+
+
+/* Print: hide native calendar picker icon for invoice date. */
+@media print {
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    display: none !important;
+    -webkit-appearance: none !important;
+  }
+
+  input[type="date"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background: transparent !important;
+  }
+}
