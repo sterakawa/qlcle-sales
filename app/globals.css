@@ -977,3 +977,31 @@ h1 {
     background: transparent !important;
   }
 }
+
+
+.documentTabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.documentTabs button {
+  border: 1px solid #cbc7c0;
+  background: #f7f5f1;
+  border-radius: 6px;
+  padding: 5px 9px;
+  font-size: 11px;
+  color: #666;
+}
+
+.documentTabs button.active {
+  background: #1f1f1f;
+  border-color: #1f1f1f;
+  color: #fff;
+}
+
+@media print {
+  .documentTabs {
+    display: none !important;
+  }
+}
