@@ -119,7 +119,7 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [documentType, setDocumentType] = useState<DocumentType>("invoice");
+  const [documentType, setDocumentType] = useState<DocumentType>("estimate");
   const config = documentConfig[documentType];
   const [customer, setCustomer] = useState("株式会社マイナビ");
   const [projectName, setProjectName] = useState("イベント運営費");
@@ -526,9 +526,9 @@ export default function Home() {
           <div className="eyebrow">QLCLE SALES</div>
           <h1>{config.title}</h1>
           <div className="documentTabs">
-            <button className={documentType === "invoice" ? "active" : ""} onClick={() => { setDocumentType("invoice"); resetInvoice(); }}>請求書</button>
             <button className={documentType === "estimate" ? "active" : ""} onClick={() => { setDocumentType("estimate"); resetInvoice(); }}>見積書</button>
             <button className={documentType === "delivery" ? "active" : ""} onClick={() => { setDocumentType("delivery"); resetInvoice(); }}>納品書</button>
+            <button className={documentType === "invoice" ? "active" : ""} onClick={() => { setDocumentType("invoice"); resetInvoice(); }}>請求書</button>
           </div>
         </div>
         <div className="actions">
