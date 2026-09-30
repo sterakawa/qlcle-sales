@@ -94,9 +94,20 @@ const itemPresets = [
 
 const unitOptions = ["日", "イベント", "式", "人", "名", "台", "会場", "レーン", "枚", "時間"];
 
+function safeNumber(value: number, fallback = 0) {
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function numberInputValue(value: number) {
+  return Number.isFinite(value) ? value : "";
+}
+
 function lineAmount(item: LineItem) {
-  const multiplier = item.calculationType === "lane" ? item.lanes : 1;
-  return item.quantity * multiplier * item.unitPrice;
+  const quantity = safeNumber(item.quantity, 0);
+  const lanes = safeNumber(item.lanes, 1);
+  const unitPrice = safeNumber(item.unitPrice, 0);
+  const multiplier = item.calculationType === "lane" ? lanes : 1;
+  return quantity * multiplier * unitPrice;
 }
 
 function blankItem(): LineItem {
@@ -444,10 +455,10 @@ export default function Home() {
           sort_order: index,
           name: item.name.trim(),
           description: item.description.trim() || null,
-          quantity: item.quantity,
+          quantity: safeNumber(item.quantity, 0),
           unit: item.unit,
-          lanes: item.lanes,
-          unit_price: item.unitPrice,
+          lanes: safeNumber(item.lanes, 1),
+          unit_price: safeNumber(item.unitPrice, 0),
           calculation_type: item.calculationType,
           amount: lineAmount(item),
         }));
@@ -704,9 +715,11 @@ export default function Home() {
                       className="number compact"
                       type="number"
                       min="0"
-                      value={item.quantity}
+                      value={numberInputValue(item.quantity)}
                       onChange={(e) =>
-                        updateItem(item.id, { quantity: Number(e.target.value) })
+                        updateItem(item.id, {
+                          quantity: e.target.value === "" ? Number.NaN : Number(e.target.value),
+                        })
                       }
                     />
                   </td>
@@ -728,9 +741,11 @@ export default function Home() {
                           className="number compact"
                           type="number"
                           min="1"
-                          value={item.lanes}
+                          value={numberInputValue(item.lanes)}
                           onChange={(e) =>
-                            updateItem(item.id, { lanes: Number(e.target.value) })
+                            updateItem(item.id, {
+                              lanes: e.target.value === "" ? Number.NaN : Number(e.target.value),
+                            })
                           }
                         />
                         <button
@@ -762,9 +777,11 @@ export default function Home() {
                       className="number compact"
                       type="number"
                       min="0"
-                      value={item.unitPrice}
+                      value={numberInputValue(item.unitPrice)}
                       onChange={(e) =>
-                        updateItem(item.id, { unitPrice: Number(e.target.value) })
+                        updateItem(item.id, {
+                          unitPrice: e.target.value === "" ? Number.NaN : Number(e.target.value),
+                        })
                       }
                     />
                   </td>
