@@ -122,6 +122,9 @@ export default function Home() {
   const [documentType, setDocumentType] = useState<DocumentType>("invoice");
   const config = documentConfig[documentType];
   const [customer, setCustomer] = useState("株式会社マイナビ");
+  const [projectName, setProjectName] = useState("イベント運営費");
+  const [eventDate, setEventDate] = useState("");
+  const [venue, setVenue] = useState("");
   const [subject, setSubject] = useState("イベント運営費");
   const [invoiceNo, setInvoiceNo] = useState("2026-001");
   const [issueDate, setIssueDate] = useState("2026-09-28");
@@ -228,6 +231,20 @@ export default function Home() {
     setSaveState("idle");
     setSaveError("");
 
+    const { data: projectRow, error: projectError } = await supabase
+      .from("projects")
+      .select("name, event_date, venue")
+      .eq("id", document.project_id)
+      .single();
+
+    if (projectError) {
+      console.error("loadDocument project failed", projectError);
+    } else if (projectRow) {
+      setProjectName(projectRow.name ?? "");
+      setEventDate(projectRow.event_date ?? "");
+      setVenue(projectRow.venue ?? "");
+    }
+
     const { data, error } = await supabase
       .from("document_items")
       .select("id, name, description, quantity, unit, lanes, unit_price, calculation_type")
@@ -297,6 +314,9 @@ export default function Home() {
 
   const resetInvoice = () => {
     setCustomer("");
+    setProjectName("");
+    setEventDate("");
+    setVenue("");
     setSubject("");
     setInvoiceNo("");
     setIssueDate(new Date().toISOString().slice(0, 10));
@@ -311,7 +331,7 @@ export default function Home() {
   };
 
   const saveDocument = async () => {
-    if (!customer.trim() || !subject.trim()) {
+    if (!customer.trim() || !projectName.trim() || !subject.trim()) {
       setSaveState("error");
       return;
     }
@@ -346,7 +366,9 @@ export default function Home() {
           .from("projects")
           .insert({
             customer_id: customerRow.id,
-            name: subject.trim(),
+            name: projectName.trim(),
+            event_date: eventDate || null,
+            venue: venue.trim() || null,
             status: documentType === "estimate" ? "estimating" : "active",
           })
           .select("id")
@@ -360,7 +382,9 @@ export default function Home() {
           .from("projects")
           .update({
             customer_id: customerRow.id,
-            name: subject.trim(),
+            name: projectName.trim(),
+            event_date: eventDate || null,
+            venue: venue.trim() || null,
             updated_at: new Date().toISOString(),
           })
           .eq("id", savedProjectId);
@@ -524,9 +548,37 @@ export default function Home() {
       {saveState === "error" && (
         <div className="saveMessage error">
           <strong>保存できませんでした。</strong>
-          <span>{saveError || "請求先・件名と接続状態を確認してください。"}</span>
+          <span>{saveError || "請求先・案件名・件名と接続状態を確認してください。"}</span>
         </div>
       )}
+      <div className="projectBar">
+        <label>
+          案件名
+          <input
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+            placeholder="例：マイナビ就職EXPO"
+          />
+        </label>
+        <label>
+          開催日
+          <input
+            type="date"
+            value={eventDate}
+            onChange={(e) => setEventDate(e.target.value)}
+          />
+        </label>
+        <label>
+          会場
+          <input
+            value={venue}
+            onChange={(e) => setVenue(e.target.value)}
+            placeholder="例：名古屋"
+          />
+        </label>
+        {projectId && <span className="projectLinked">案件に接続中</span>}
+      </div>
+
       <div className="workspace">
         <section className={`paper ${items.length >= 6 ? "printDense" : ""}`}>
           <div className="printTitle">{config.printTitle}</div>
