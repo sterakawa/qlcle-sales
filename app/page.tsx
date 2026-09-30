@@ -572,7 +572,6 @@ export default function Home() {
               </span>
               <span>〒105-0011</span>
               <span>東京都港区芝公園2丁目11番13号</span>
-              <span>TEL 03-5733-6528</span>
               <span>登録番号 T8010401110141</span>
             </div>
           </div>
