@@ -1085,3 +1085,40 @@ h1 {
   color: #8a867f;
   text-align: center;
 }
+
+
+.companyWithSeal {
+  position: relative;
+  padding-right: 54px;
+}
+
+.companySeal {
+  position: absolute;
+  width: 66px;
+  height: 66px;
+  object-fit: contain;
+  right: -2px;
+  top: 12px;
+  opacity: 0.88;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  user-select: none;
+}
+
+@media print {
+  .companyWithSeal {
+    padding-right: 50px;
+  }
+
+  .companySeal {
+    display: block !important;
+    width: 62px;
+    height: 62px;
+    right: 0;
+    top: 10px;
+    opacity: 0.9;
+    mix-blend-mode: multiply;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
