@@ -1219,3 +1219,15 @@ h1 {
     -webkit-print-color-adjust: exact;
   }
 }
+
+
+/* Company block alignment refinement */
+.company {
+  transform: translateX(18px);
+}
+
+@media print {
+  .company {
+    transform: translateX(18px) !important;
+  }
+}
