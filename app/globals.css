@@ -1145,3 +1145,32 @@ h1 {
     top: 16px !important;
   }
 }
+
+
+/* Refine company seal placement */
+.companyWithSeal {
+  position: relative;
+  padding-right: 68px !important;
+}
+
+.companySeal {
+  width: 54px !important;
+  height: 54px !important;
+  right: 4px !important;
+  top: 12px !important;
+  opacity: 0.9 !important;
+}
+
+@media print {
+  .companyWithSeal {
+    padding-right: 64px !important;
+  }
+
+  .companySeal {
+    width: 52px !important;
+    height: 52px !important;
+    right: 4px !important;
+    top: 12px !important;
+    opacity: 0.9 !important;
+  }
+}
