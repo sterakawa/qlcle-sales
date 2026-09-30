@@ -66,6 +66,20 @@ type LineItem = {
   calculationType: CalculationType;
 };
 
+type BinderDocument = {
+  id: string;
+  project_id: string;
+  document_type: DocumentType;
+  document_number: string | null;
+  issue_date: string | null;
+  subject: string | null;
+  customer_name: string | null;
+  first_meta: string | null;
+  second_meta: string | null;
+  third_meta: string | null;
+  notes: string | null;
+};
+
 const itemPresets = [
   { name: "SPIXD 基本料金", unitPrice: 80000, unit: "日", calculationType: "lane" as CalculationType },
   { name: "WEBカスタマイズ", unitPrice: 20000, unit: "イベント", calculationType: "standard" as CalculationType },
@@ -79,19 +93,6 @@ const itemPresets = [
 ];
 
 const unitOptions = ["日", "イベント", "式", "人", "名", "台", "会場", "レーン", "枚", "時間"];
-
-const sampleInvoices = [
-  { date: "09/28", customer: "株式会社マイナビ" },
-  { date: "09/24", customer: "株式会社○○イベント" },
-  { date: "09/21", customer: "△△株式会社" },
-  { date: "09/18", customer: "株式会社サンプル" },
-  { date: "09/15", customer: "□□株式会社" },
-  { date: "09/12", customer: "株式会社テスト" },
-  { date: "09/09", customer: "○○企画株式会社" },
-  { date: "09/06", customer: "株式会社イベントラボ" },
-  { date: "09/03", customer: "株式会社デモ" },
-  { date: "09/01", customer: "株式会社サンプル東京" },
-];
 
 function lineAmount(item: LineItem) {
   const multiplier = item.calculationType === "lane" ? item.lanes : 1;
@@ -132,6 +133,8 @@ export default function Home() {
   const [documentId, setDocumentId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState("");
+  const [binderDocuments, setBinderDocuments] = useState<BinderDocument[]>([]);
+  const [binderLoading, setBinderLoading] = useState(false);
   const [items, setItems] = useState<LineItem[]>([
     {
       id: 1,
@@ -190,6 +193,71 @@ export default function Home() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
+
+  const loadBinderDocuments = async (type: DocumentType = documentType) => {
+    setBinderLoading(true);
+
+    const { data, error } = await supabase
+      .from("documents")
+      .select("id, project_id, document_type, document_number, issue_date, subject, customer_name, first_meta, second_meta, third_meta, notes")
+      .eq("document_type", type)
+      .order("issue_date", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("loadBinderDocuments failed", error);
+      setBinderDocuments([]);
+    } else {
+      setBinderDocuments((data ?? []) as BinderDocument[]);
+    }
+
+    setBinderLoading(false);
+  };
+
+  const loadDocument = async (document: BinderDocument) => {
+    setDocumentId(document.id);
+    setProjectId(document.project_id);
+    setCustomer(document.customer_name ?? "");
+    setSubject(document.subject ?? "");
+    setInvoiceNo(document.document_number ?? "");
+    setIssueDate(document.issue_date ?? "");
+    setFirstMeta(document.first_meta ?? "");
+    setSecondMeta(document.second_meta ?? "");
+    setThirdMeta(document.third_meta ?? "");
+    setNotes(document.notes ?? "");
+    setSaveState("idle");
+    setSaveError("");
+
+    const { data, error } = await supabase
+      .from("document_items")
+      .select("id, name, description, quantity, unit, lanes, unit_price, calculation_type")
+      .eq("document_id", document.id)
+      .order("sort_order", { ascending: true });
+
+    if (error) {
+      console.error("loadDocument items failed", error);
+      return;
+    }
+
+    setItems(
+      (data ?? []).map((item, index) => ({
+        id: index + 1,
+        name: item.name ?? "",
+        description: item.description ?? "",
+        quantity: Number(item.quantity ?? 1),
+        unit: item.unit ?? "式",
+        lanes: Number(item.lanes ?? 1),
+        unitPrice: Number(item.unit_price ?? 0),
+        calculationType: item.calculation_type === "lane" ? "lane" : "standard",
+      }))
+    );
+  };
+
+  useEffect(() => {
+    if (session) {
+      loadBinderDocuments(documentType);
+    }
+  }, [session, documentType]);
 
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + lineAmount(item), 0),
@@ -368,6 +436,7 @@ export default function Home() {
         if (insertItemsError) throw insertItemsError;
       }
 
+      await loadBinderDocuments(documentType);
       setSaveState("saved");
       window.setTimeout(() => setSaveState("idle"), 1800);
     } catch (error) {
@@ -433,9 +502,9 @@ export default function Home() {
           <div className="eyebrow">QLCLE SALES</div>
           <h1>{config.title}</h1>
           <div className="documentTabs">
-            <button className={documentType === "invoice" ? "active" : ""} onClick={() => setDocumentType("invoice")}>請求書</button>
-            <button className={documentType === "estimate" ? "active" : ""} onClick={() => setDocumentType("estimate")}>見積書</button>
-            <button className={documentType === "delivery" ? "active" : ""} onClick={() => setDocumentType("delivery")}>納品書</button>
+            <button className={documentType === "invoice" ? "active" : ""} onClick={() => { setDocumentType("invoice"); resetInvoice(); }}>請求書</button>
+            <button className={documentType === "estimate" ? "active" : ""} onClick={() => { setDocumentType("estimate"); resetInvoice(); }}>見積書</button>
+            <button className={documentType === "delivery" ? "active" : ""} onClick={() => { setDocumentType("delivery"); resetInvoice(); }}>納品書</button>
           </div>
         </div>
         <div className="actions">
@@ -713,22 +782,34 @@ export default function Home() {
             <span>{config.binderLabel}</span>
             <button>検索</button>
           </div>
-          <div className="binderMonth">2026年9月</div>
+          <div className="binderMonth">保存済み</div>
           <div className="binderList">
-            {sampleInvoices.map((invoice, index) => (
-              <button
-                className={"binderTab " + (index === 0 ? "active" : "")}
-                key={invoice.date + invoice.customer}
-              >
-                <span className="binderDate">2026/{invoice.date}</span>
-                <span className="binderCustomer">{invoice.customer}</span>
-              </button>
-            ))}
+            {binderLoading ? (
+              <div className="binderEmpty">読込中...</div>
+            ) : binderDocuments.length === 0 ? (
+              <div className="binderEmpty">まだ保存された書類はありません</div>
+            ) : (
+              binderDocuments.map((document) => {
+                const date = document.issue_date
+                  ? document.issue_date.replaceAll("-", "/")
+                  : "日付なし";
+
+                return (
+                  <button
+                    className={"binderTab " + (document.id === documentId ? "active" : "")}
+                    key={document.id}
+                    onClick={() => loadDocument(document)}
+                  >
+                    <span className="binderDate">{date}</span>
+                    <span className="binderCustomer">{document.customer_name || "名称未設定"}</span>
+                  </button>
+                );
+              })
+            )}
           </div>
           <div className="binderNav">
-            <button>‹ 前月</button>
-            <span>2026年9月</span>
-            <button>次月 ›</button>
+            <button onClick={() => loadBinderDocuments(documentType)}>↻ 更新</button>
+            <span>{binderDocuments.length}件</span>
           </div>
         </aside>
       </div>
