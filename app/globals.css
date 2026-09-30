@@ -1122,3 +1122,26 @@ h1 {
     -webkit-print-color-adjust: exact;
   }
 }
+
+
+/* Company seal: smaller, closer to a real business-document stamp size */
+.companySeal {
+  width: 38px !important;
+  height: 38px !important;
+  right: 2px !important;
+  top: 18px !important;
+  opacity: 0.9;
+}
+
+@media print {
+  .companyWithSeal {
+    padding-right: 34px !important;
+  }
+
+  .companySeal {
+    width: 36px !important;
+    height: 36px !important;
+    right: 2px !important;
+    top: 16px !important;
+  }
+}
