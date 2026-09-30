@@ -1231,3 +1231,29 @@ h1 {
     transform: translateX(18px) !important;
   }
 }
+
+
+/* Final company block / seal tuning */
+.company {
+  transform: translateX(34px) !important;
+}
+
+.representativeRow .companySeal {
+  width: 5.2em !important;
+  height: 5.2em !important;
+  left: 11.0em !important;
+  top: -1.35em !important;
+}
+
+@media print {
+  .company {
+    transform: translateX(34px) !important;
+  }
+
+  .representativeRow .companySeal {
+    width: 5.2em !important;
+    height: 5.2em !important;
+    left: 11.0em !important;
+    top: -1.35em !important;
+  }
+}
