@@ -131,6 +131,7 @@ export default function Home() {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [documentId, setDocumentId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState("");
   const [items, setItems] = useState<LineItem[]>([
     {
       id: 1,
@@ -248,6 +249,7 @@ export default function Home() {
     }
 
     setSaveState("saving");
+    setSaveError("");
 
     try {
       let savedProjectId = projectId;
@@ -370,6 +372,13 @@ export default function Home() {
       window.setTimeout(() => setSaveState("idle"), 1800);
     } catch (error) {
       console.error("saveDocument failed", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error && "message" in error
+            ? String((error as { message?: unknown }).message ?? "Unknown error")
+            : String(error);
+      setSaveError(message);
       setSaveState("error");
     }
   };
@@ -444,7 +453,10 @@ export default function Home() {
       </header>
 
       {saveState === "error" && (
-        <div className="saveMessage error">保存できませんでした。請求先・件名と接続状態を確認してください。</div>
+        <div className="saveMessage error">
+          <strong>保存できませんでした。</strong>
+          <span>{saveError || "請求先・件名と接続状態を確認してください。"}</span>
+        </div>
       )}
       <div className="workspace">
         <section className={`paper ${items.length >= 6 ? "printDense" : ""}`}>
