@@ -123,6 +123,14 @@ export default function Home() {
   const [customer, setCustomer] = useState("株式会社マイナビ");
   const [subject, setSubject] = useState("イベント運営費");
   const [invoiceNo, setInvoiceNo] = useState("2026-001");
+  const [issueDate, setIssueDate] = useState("2026-09-28");
+  const [firstMeta, setFirstMeta] = useState("");
+  const [secondMeta, setSecondMeta] = useState("");
+  const [thirdMeta, setThirdMeta] = useState("");
+  const [notes, setNotes] = useState("");
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [documentId, setDocumentId] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [items, setItems] = useState<LineItem[]>([
     {
       id: 1,
@@ -222,7 +230,148 @@ export default function Home() {
     setCustomer("");
     setSubject("");
     setInvoiceNo("");
+    setIssueDate(new Date().toISOString().slice(0, 10));
+    setFirstMeta("");
+    setSecondMeta("");
+    setThirdMeta("");
+    setNotes("");
     setItems([blankItem()]);
+    setProjectId(null);
+    setDocumentId(null);
+    setSaveState("idle");
+  };
+
+  const saveDocument = async () => {
+    if (!customer.trim() || !subject.trim()) {
+      setSaveState("error");
+      return;
+    }
+
+    setSaveState("saving");
+
+    try {
+      let savedProjectId = projectId;
+
+      let { data: customerRow, error: customerLookupError } = await supabase
+        .from("customers")
+        .select("id")
+        .eq("name", customer.trim())
+        .maybeSingle();
+
+      if (customerLookupError) throw customerLookupError;
+
+      if (!customerRow) {
+        const { data: createdCustomer, error: createCustomerError } = await supabase
+          .from("customers")
+          .insert({ name: customer.trim() })
+          .select("id")
+          .single();
+
+        if (createCustomerError) throw createCustomerError;
+        customerRow = createdCustomer;
+      }
+
+      if (!savedProjectId) {
+        const { data: createdProject, error: createProjectError } = await supabase
+          .from("projects")
+          .insert({
+            customer_id: customerRow.id,
+            name: subject.trim(),
+            status: documentType === "estimate" ? "estimating" : "active",
+          })
+          .select("id")
+          .single();
+
+        if (createProjectError) throw createProjectError;
+        savedProjectId = createdProject.id;
+        setProjectId(savedProjectId);
+      } else {
+        const { error: updateProjectError } = await supabase
+          .from("projects")
+          .update({
+            customer_id: customerRow.id,
+            name: subject.trim(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", savedProjectId);
+
+        if (updateProjectError) throw updateProjectError;
+      }
+
+      const documentPayload = {
+        project_id: savedProjectId,
+        document_type: documentType,
+        document_number: invoiceNo.trim() || null,
+        issue_date: issueDate || null,
+        subject: subject.trim(),
+        customer_name: customer.trim(),
+        first_meta: firstMeta.trim() || null,
+        second_meta: secondMeta.trim() || null,
+        third_meta: thirdMeta.trim() || null,
+        notes: notes.trim() || null,
+        subtotal,
+        tax,
+        total,
+        updated_at: new Date().toISOString(),
+      };
+
+      let savedDocumentId = documentId;
+
+      if (!savedDocumentId) {
+        const { data: createdDocument, error: createDocumentError } = await supabase
+          .from("documents")
+          .insert(documentPayload)
+          .select("id")
+          .single();
+
+        if (createDocumentError) throw createDocumentError;
+        savedDocumentId = createdDocument.id;
+        setDocumentId(savedDocumentId);
+      } else {
+        const { error: updateDocumentError } = await supabase
+          .from("documents")
+          .update(documentPayload)
+          .eq("id", savedDocumentId);
+
+        if (updateDocumentError) throw updateDocumentError;
+
+        const { error: deleteItemsError } = await supabase
+          .from("document_items")
+          .delete()
+          .eq("document_id", savedDocumentId);
+
+        if (deleteItemsError) throw deleteItemsError;
+      }
+
+      const itemRows = items
+        .filter((item) => item.name.trim())
+        .map((item, index) => ({
+          document_id: savedDocumentId,
+          sort_order: index,
+          name: item.name.trim(),
+          description: item.description.trim() || null,
+          quantity: item.quantity,
+          unit: item.unit,
+          lanes: item.lanes,
+          unit_price: item.unitPrice,
+          calculation_type: item.calculationType,
+          amount: lineAmount(item),
+        }));
+
+      if (itemRows.length > 0) {
+        const { error: insertItemsError } = await supabase
+          .from("document_items")
+          .insert(itemRows);
+
+        if (insertItemsError) throw insertItemsError;
+      }
+
+      setSaveState("saved");
+      window.setTimeout(() => setSaveState("idle"), 1800);
+    } catch (error) {
+      console.error("saveDocument failed", error);
+      setSaveState("error");
+    }
   };
 
   if (authLoading && !session) {
@@ -283,7 +432,9 @@ export default function Home() {
         <div className="actions">
           <button onClick={resetInvoice}>新規</button>
           <button onClick={handleLogout}>ログアウト</button>
-          <button>保存</button>
+          <button onClick={saveDocument} disabled={saveState === "saving"}>
+            {saveState === "saving" ? "保存中..." : saveState === "saved" ? "保存済" : "保存"}
+          </button>
           <button>複製</button>
           <button className="danger">破棄</button>
           <button className="primary" onClick={() => window.print()}>
@@ -292,6 +443,9 @@ export default function Home() {
         </div>
       </header>
 
+      {saveState === "error" && (
+        <div className="saveMessage error">保存できませんでした。請求先・件名と接続状態を確認してください。</div>
+      )}
       <div className="workspace">
         <section className={`paper ${items.length >= 6 ? "printDense" : ""}`}>
           <div className="printTitle">{config.printTitle}</div>
@@ -308,7 +462,11 @@ export default function Home() {
             <div className="metaGrid">
               <label>
                 {config.dateLabel}
-                <input type="date" defaultValue="2026-09-28" />
+                <input
+                  type="date"
+                  value={issueDate}
+                  onChange={(e) => setIssueDate(e.target.value)}
+                />
               </label>
               <label>
                 {config.numberLabel}
@@ -343,15 +501,30 @@ export default function Home() {
           <div className="subMeta">
             <label>
               {config.firstMetaLabel}
-              <input type="text" placeholder={config.firstMetaPlaceholder} />
+              <input
+                type="text"
+                value={firstMeta}
+                onChange={(e) => setFirstMeta(e.target.value)}
+                placeholder={config.firstMetaPlaceholder}
+              />
             </label>
             <label>
               {config.secondMetaLabel}
-              <input type="text" placeholder={config.secondMetaPlaceholder} />
+              <input
+                type="text"
+                value={secondMeta}
+                onChange={(e) => setSecondMeta(e.target.value)}
+                placeholder={config.secondMetaPlaceholder}
+              />
             </label>
             <label>
               {config.thirdMetaLabel}
-              <input type="text" placeholder={config.thirdMetaPlaceholder} />
+              <input
+                type="text"
+                value={thirdMeta}
+                onChange={(e) => setThirdMeta(e.target.value)}
+                placeholder={config.thirdMetaPlaceholder}
+              />
             </label>
           </div>
 
@@ -500,7 +673,12 @@ export default function Home() {
 
           <div className="notes">
             <label>備考</label>
-            <textarea rows={3} placeholder="必要な場合のみ入力" />
+            <textarea
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="必要な場合のみ入力"
+            />
           </div>
 
           {config.showPayment && (
