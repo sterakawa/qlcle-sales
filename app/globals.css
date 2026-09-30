@@ -1174,3 +1174,48 @@ h1 {
     opacity: 0.9 !important;
   }
 }
+
+
+/* Keep the seal anchored to the representative line so screen and print match. */
+.companyWithSeal {
+  position: relative;
+  padding-right: 0 !important;
+}
+
+.representativeRow {
+  position: relative;
+  display: inline-block;
+  width: max-content;
+  max-width: 100%;
+}
+
+.representativeRow .companySeal {
+  position: absolute !important;
+  width: 4.4em !important;
+  height: 4.4em !important;
+  left: 10.8em !important;
+  right: auto !important;
+  top: -1.1em !important;
+  object-fit: contain;
+  opacity: 0.9 !important;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  user-select: none;
+}
+
+@media print {
+  .companyWithSeal {
+    padding-right: 0 !important;
+  }
+
+  .representativeRow .companySeal {
+    width: 4.4em !important;
+    height: 4.4em !important;
+    left: 10.8em !important;
+    right: auto !important;
+    top: -1.1em !important;
+    opacity: 0.9 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
