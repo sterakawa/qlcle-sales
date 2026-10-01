@@ -1760,3 +1760,74 @@ h1 {
     min-height: 40px;
   }
 }
+
+
+/* Inline management actions */
+.customerTable .managementRow {
+  grid-template-columns: 1.45fr .75fr .8fr 1.25fr 220px;
+}
+
+.projectTable .managementRow {
+  grid-template-columns: 105px 1.45fr 1.15fr .9fr 105px 220px;
+}
+
+.rowActions {
+  display: flex;
+  gap: 5px;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.rowActions button {
+  white-space: nowrap;
+}
+
+.rowActions .dangerMini {
+  color: #8b2f2f;
+  border-color: #d8bcbc;
+  background: #fffafa;
+}
+
+.statusSelect {
+  width: 100%;
+  max-width: 105px;
+  border: 1px solid #d2ccc3;
+  border-radius: 999px;
+  padding: 5px 7px;
+  font-size: 10px;
+  background: #ece8e0;
+  color: #5f5a52;
+}
+
+.statusSelect.status-estimating {
+  background: #efe8d8;
+  color: #6d5b35;
+}
+
+.statusSelect.status-active {
+  background: #e4ece8;
+  color: #3f6252;
+}
+
+.statusSelect.status-lost {
+  background: #eee;
+  color: #777;
+}
+
+@media (max-width: 700px) {
+  .rowActions {
+    justify-content: stretch;
+  }
+
+  .rowActions button {
+    flex: 1 1 auto;
+    min-height: 36px;
+  }
+
+  .statusSelect {
+    max-width: none;
+    width: 100%;
+    min-height: 38px;
+  }
+}
