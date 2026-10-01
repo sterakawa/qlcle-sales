@@ -327,6 +327,116 @@ export default function Home() {
     setManagementLoading(false);
   };
 
+  const editCustomer = async (row: CustomerRow) => {
+    const name = window.prompt("会社名", row.name);
+    if (name === null || !name.trim()) return;
+    const contactName = window.prompt("担当者", row.contact_name ?? "");
+    if (contactName === null) return;
+    const phone = window.prompt("電話", row.phone ?? "");
+    if (phone === null) return;
+    const email = window.prompt("メール", row.email ?? "");
+    if (email === null) return;
+    const address = window.prompt("住所", row.address ?? "");
+    if (address === null) return;
+
+    setManagementLoading(true);
+    const { error } = await supabase
+      .from("customers")
+      .update({
+        name: name.trim(),
+        contact_name: contactName.trim() || null,
+        phone: phone.trim() || null,
+        email: email.trim() || null,
+        address: address.trim() || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", row.id);
+
+    if (error) {
+      console.error("editCustomer failed", error);
+    } else {
+      await loadCustomers();
+    }
+    setManagementLoading(false);
+  };
+
+  const deleteCustomer = async (row: CustomerRow) => {
+    const ok = window.confirm(
+      `${row.name} を削除しますか？\n案件や書類は削除されませんが、取引先との紐づきは外れます。`
+    );
+    if (!ok) return;
+
+    setManagementLoading(true);
+    const { error } = await supabase.from("customers").delete().eq("id", row.id);
+    if (error) {
+      console.error("deleteCustomer failed", error);
+    } else {
+      await Promise.all([loadCustomers(), loadProjects()]);
+    }
+    setManagementLoading(false);
+  };
+
+  const updateProjectStatus = async (row: ProjectRow, status: string) => {
+    setManagementLoading(true);
+    const { error } = await supabase
+      .from("projects")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", row.id);
+
+    if (error) {
+      console.error("updateProjectStatus failed", error);
+    } else {
+      await loadProjects();
+    }
+    setManagementLoading(false);
+  };
+
+  const editProject = async (row: ProjectRow) => {
+    const name = window.prompt("案件名", row.name);
+    if (name === null || !name.trim()) return;
+    const eventDate = window.prompt("実施日（YYYY-MM-DD）", row.event_date ?? "");
+    if (eventDate === null) return;
+    const venue = window.prompt("会場", row.venue ?? "");
+    if (venue === null) return;
+
+    setManagementLoading(true);
+    const { error } = await supabase
+      .from("projects")
+      .update({
+        name: name.trim(),
+        event_date: eventDate.trim() || null,
+        venue: venue.trim() || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", row.id);
+
+    if (error) {
+      console.error("editProject failed", error);
+    } else {
+      await loadProjects();
+    }
+    setManagementLoading(false);
+  };
+
+  const deleteProject = async (row: ProjectRow) => {
+    const ok = window.confirm(
+      `${row.name} を削除しますか？\nこの案件に紐づく見積書・納品書・請求書・明細も削除されます。\n通常は「見送り」に変更する方がおすすめです。`
+    );
+    if (!ok) return;
+
+    const finalOk = window.confirm("本当に削除しますか？ この操作は元に戻せません。");
+    if (!finalOk) return;
+
+    setManagementLoading(true);
+    const { error } = await supabase.from("projects").delete().eq("id", row.id);
+    if (error) {
+      console.error("deleteProject failed", error);
+    } else {
+      await loadProjects();
+    }
+    setManagementLoading(false);
+  };
+
   const showCustomerProjects = (customerId: string) => {
     setProjectCustomerFilter(customerId);
     setNewProjectCustomerId(customerId);
@@ -1171,7 +1281,7 @@ export default function Home() {
             ) : (
               <div className="managementTable customerTable">
                 <div className="managementRow header">
-                  <span>会社名</span><span>担当者</span><span>電話</span><span>メール</span><span></span>
+                  <span>会社名</span><span>担当者</span><span>電話</span><span>メール</span><span>操作</span>
                 </div>
                 {customerRows.map((row) => (
                   <div className="managementRow" key={row.id}>
@@ -1179,7 +1289,11 @@ export default function Home() {
                     <span>{row.contact_name || "—"}</span>
                     <span>{row.phone || "—"}</span>
                     <span>{row.email || "—"}</span>
-                    <button onClick={() => showCustomerProjects(row.id)}>案件を見る</button>
+                    <div className="rowActions">
+                      <button onClick={() => showCustomerProjects(row.id)}>案件を見る</button>
+                      <button onClick={() => editCustomer(row)}>編集</button>
+                      <button className="dangerMini" onClick={() => deleteCustomer(row)}>削除</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1244,7 +1358,7 @@ export default function Home() {
             ) : (
               <div className="managementTable projectTable">
                 <div className="managementRow header">
-                  <span>開催日</span><span>案件名</span><span>取引先</span><span>会場</span><span>状態</span><span></span>
+                  <span>開催日</span><span>案件名</span><span>取引先</span><span>会場</span><span>状態</span><span>操作</span>
                 </div>
                 {projectRows
                   .filter((row) => !projectCustomerFilter || row.customer_id === projectCustomerFilter)
@@ -1261,8 +1375,21 @@ export default function Home() {
                         <strong>{row.name}</strong>
                         <span>{company?.name || "—"}</span>
                         <span>{row.venue || "—"}</span>
-                        <span className={"statusTag status-" + row.status}>{statusLabel}</span>
-                        <button onClick={() => openProject(row)}>書類を開く</button>
+                        <select
+                          className={"statusSelect status-" + row.status}
+                          value={row.status}
+                          onChange={(e) => updateProjectStatus(row, e.target.value)}
+                        >
+                          <option value="estimating">見積中</option>
+                          <option value="active">進行中</option>
+                          <option value="complete">完了</option>
+                          <option value="lost">見送り</option>
+                        </select>
+                        <div className="rowActions">
+                          <button onClick={() => openProject(row)}>書類を開く</button>
+                          <button onClick={() => editProject(row)}>編集</button>
+                          <button className="dangerMini" onClick={() => deleteProject(row)}>削除</button>
+                        </div>
                       </div>
                     );
                   })}
