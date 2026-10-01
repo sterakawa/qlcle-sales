@@ -1369,3 +1369,18 @@ h1 {
     display: none !important;
   }
 }
+
+
+/* Align the project bar with the left edge of the document workspace. */
+.projectBar {
+  width: min(calc(100% - 308px), 1232px);
+  margin-left: max(0px, calc((100% - 1540px) / 2));
+  margin-right: auto;
+}
+
+@media (max-width: 1180px) {
+  .projectBar {
+    width: 100%;
+    margin-left: 0;
+  }
+}
