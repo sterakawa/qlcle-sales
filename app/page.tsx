@@ -6,6 +6,28 @@ import { supabase } from "../lib/supabase";
 
 type CalculationType = "standard" | "lane";
 type DocumentType = "invoice" | "estimate" | "delivery";
+type AppMode = "documents" | "customers" | "projects";
+
+type CustomerRow = {
+  id: string;
+  name: string;
+  contact_name: string | null;
+  postal_code: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  note: string | null;
+};
+
+type ProjectRow = {
+  id: string;
+  customer_id: string | null;
+  name: string;
+  status: string;
+  event_date: string | null;
+  venue: string | null;
+  updated_at: string | null;
+};
 
 const documentConfig = {
   invoice: {
@@ -131,8 +153,18 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [appMode, setAppMode] = useState<AppMode>("documents");
   const [documentType, setDocumentType] = useState<DocumentType>("estimate");
   const config = documentConfig[documentType];
+  const [customerRows, setCustomerRows] = useState<CustomerRow[]>([]);
+  const [projectRows, setProjectRows] = useState<ProjectRow[]>([]);
+  const [managementLoading, setManagementLoading] = useState(false);
+  const [projectCustomerFilter, setProjectCustomerFilter] = useState<string | null>(null);
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [newCustomerContact, setNewCustomerContact] = useState("");
+  const [newCustomerPhone, setNewCustomerPhone] = useState("");
+  const [newCustomerEmail, setNewCustomerEmail] = useState("");
+  const [newCustomerAddress, setNewCustomerAddress] = useState("");
   const [customer, setCustomer] = useState("株式会社マイナビ");
   const [projectName, setProjectName] = useState("イベント運営費");
   const [eventDate, setEventDate] = useState("");
@@ -209,6 +241,101 @@ export default function Home() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+  };
+
+  const loadCustomers = async () => {
+    setManagementLoading(true);
+    const { data, error } = await supabase
+      .from("customers")
+      .select("id, name, contact_name, postal_code, address, phone, email, note")
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error("loadCustomers failed", error);
+    } else {
+      setCustomerRows((data ?? []) as CustomerRow[]);
+    }
+    setManagementLoading(false);
+  };
+
+  const loadProjects = async () => {
+    setManagementLoading(true);
+    const { data, error } = await supabase
+      .from("projects")
+      .select("id, customer_id, name, status, event_date, venue, updated_at")
+      .order("event_date", { ascending: false, nullsFirst: false })
+      .order("updated_at", { ascending: false });
+
+    if (error) {
+      console.error("loadProjects failed", error);
+    } else {
+      setProjectRows((data ?? []) as ProjectRow[]);
+    }
+    setManagementLoading(false);
+  };
+
+  const createCustomer = async () => {
+    if (!newCustomerName.trim()) return;
+
+    setManagementLoading(true);
+    const { error } = await supabase.from("customers").insert({
+      name: newCustomerName.trim(),
+      contact_name: newCustomerContact.trim() || null,
+      phone: newCustomerPhone.trim() || null,
+      email: newCustomerEmail.trim() || null,
+      address: newCustomerAddress.trim() || null,
+    });
+
+    if (error) {
+      console.error("createCustomer failed", error);
+    } else {
+      setNewCustomerName("");
+      setNewCustomerContact("");
+      setNewCustomerPhone("");
+      setNewCustomerEmail("");
+      setNewCustomerAddress("");
+      await loadCustomers();
+    }
+    setManagementLoading(false);
+  };
+
+  const showCustomerProjects = (customerId: string) => {
+    setProjectCustomerFilter(customerId);
+    setAppMode("projects");
+  };
+
+  const openProject = async (project: ProjectRow) => {
+    const { data: docs, error } = await supabase
+      .from("documents")
+      .select("id, project_id, document_type, document_number, issue_date, subject, customer_name, first_meta, second_meta, third_meta, notes, revision")
+      .eq("project_id", project.id)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error("openProject failed", error);
+      return;
+    }
+
+    setAppMode("documents");
+    setProjectCustomerFilter(null);
+
+    const latest = (docs?.[0] ?? null) as BinderDocument | null;
+    if (latest) {
+      setDocumentType(latest.document_type);
+      await loadDocument(latest);
+      return;
+    }
+
+    const customerRow = customerRows.find((row) => row.id === project.customer_id);
+    setDocumentType("estimate");
+    resetInvoice();
+    setProjectId(project.id);
+    setProjectName(project.name);
+    setEventDate(project.event_date ?? "");
+    setVenue(project.venue ?? "");
+    setCustomer(customerRow?.name ?? "");
+    setSubject(project.name);
   };
 
   const loadBinderDocuments = async (type: DocumentType = documentType) => {
@@ -289,8 +416,18 @@ export default function Home() {
   useEffect(() => {
     if (session) {
       loadBinderDocuments(documentType);
+      loadCustomers();
     }
   }, [session, documentType]);
+
+  useEffect(() => {
+    if (!session) return;
+    if (appMode === "customers") loadCustomers();
+    if (appMode === "projects") {
+      loadCustomers();
+      loadProjects();
+    }
+  }, [appMode, session]);
 
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + lineAmount(item), 0),
@@ -596,27 +733,33 @@ export default function Home() {
       <header className="toolbar">
         <div>
           <div className="eyebrow">QLCLE SALES</div>
-          <h1>{config.title}</h1>
-          <div className="documentTabs">
+          <div className="appNav">
+            <button className={appMode === "documents" ? "active" : ""} onClick={() => setAppMode("documents")}>書類</button>
+            <button className={appMode === "customers" ? "active" : ""} onClick={() => setAppMode("customers")}>取引先</button>
+            <button className={appMode === "projects" ? "active" : ""} onClick={() => { setProjectCustomerFilter(null); setAppMode("projects"); }}>案件</button>
+          </div>
+          <h1>{appMode === "documents" ? config.title : appMode === "customers" ? "取引先管理" : "案件管理"}</h1>
+          {appMode === "documents" && <div className="documentTabs">
             <button className={documentType === "estimate" ? "active" : ""} onClick={() => { setDocumentType("estimate"); resetInvoice(); }}>見積書</button>
             <button className={documentType === "delivery" ? "active" : ""} onClick={() => { setDocumentType("delivery"); resetInvoice(); }}>納品書</button>
             <button className={documentType === "invoice" ? "active" : ""} onClick={() => { setDocumentType("invoice"); resetInvoice(); }}>請求書</button>
-          </div>
+          </div>}
         </div>
         <div className="actions">
-          <button onClick={resetInvoice}>新規</button>
+          {appMode === "documents" && <button onClick={resetInvoice}>新規</button>}
           <button onClick={handleLogout}>ログアウト</button>
-          <button onClick={saveDocument} disabled={saveState === "saving"}>
+          {appMode === "documents" && <button onClick={saveDocument} disabled={saveState === "saving"}>
             {saveState === "saving" ? "保存中..." : saveState === "saved" ? "保存済" : "保存"}
-          </button>
-          <button>複製</button>
-          <button className="danger">破棄</button>
-          <button className="primary" onClick={() => window.print()}>
+          </button>}
+          {appMode === "documents" && <button>複製</button>}
+          {appMode === "documents" && <button className="danger">破棄</button>}
+          {appMode === "documents" && <button className="primary" onClick={() => window.print()}>
             PDF / 印刷
-          </button>
+          </button>}
         </div>
       </header>
 
+      {appMode === "documents" && <>
       {saveState === "error" && (
         <div className="saveMessage error">
           <strong>保存できませんでした。</strong>
@@ -973,6 +1116,93 @@ export default function Home() {
           </div>
         </aside>
       </div>
+      </>}
+
+      {appMode === "customers" && (
+        <section className="managementShell">
+          <div className="managementCard">
+            <div className="managementHead">
+              <div>
+                <div className="managementEyebrow">CUSTOMERS</div>
+                <h2>取引先一覧</h2>
+              </div>
+              <span>{customerRows.length}社</span>
+            </div>
+            <div className="customerCreate">
+              <input placeholder="会社名" value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} />
+              <input placeholder="担当者" value={newCustomerContact} onChange={(e) => setNewCustomerContact(e.target.value)} />
+              <input placeholder="電話" value={newCustomerPhone} onChange={(e) => setNewCustomerPhone(e.target.value)} />
+              <input placeholder="メール" value={newCustomerEmail} onChange={(e) => setNewCustomerEmail(e.target.value)} />
+              <input className="wide" placeholder="住所" value={newCustomerAddress} onChange={(e) => setNewCustomerAddress(e.target.value)} />
+              <button onClick={createCustomer} disabled={managementLoading || !newCustomerName.trim()}>＋ 取引先を追加</button>
+            </div>
+            {managementLoading && customerRows.length === 0 ? (
+              <div className="managementEmpty">読込中...</div>
+            ) : (
+              <div className="managementTable customerTable">
+                <div className="managementRow header">
+                  <span>会社名</span><span>担当者</span><span>電話</span><span>メール</span><span></span>
+                </div>
+                {customerRows.map((row) => (
+                  <div className="managementRow" key={row.id}>
+                    <strong>{row.name}</strong>
+                    <span>{row.contact_name || "—"}</span>
+                    <span>{row.phone || "—"}</span>
+                    <span>{row.email || "—"}</span>
+                    <button onClick={() => showCustomerProjects(row.id)}>案件を見る</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {appMode === "projects" && (
+        <section className="managementShell">
+          <div className="managementCard">
+            <div className="managementHead">
+              <div>
+                <div className="managementEyebrow">PROJECTS</div>
+                <h2>{projectCustomerFilter ? "取引先の案件" : "案件一覧"}</h2>
+              </div>
+              <div className="managementHeadActions">
+                {projectCustomerFilter && <button onClick={() => setProjectCustomerFilter(null)}>すべて表示</button>}
+                <span>{projectRows.filter((p) => !projectCustomerFilter || p.customer_id === projectCustomerFilter).length}件</span>
+              </div>
+            </div>
+            {managementLoading && projectRows.length === 0 ? (
+              <div className="managementEmpty">読込中...</div>
+            ) : (
+              <div className="managementTable projectTable">
+                <div className="managementRow header">
+                  <span>開催日</span><span>案件名</span><span>取引先</span><span>会場</span><span>状態</span><span></span>
+                </div>
+                {projectRows
+                  .filter((row) => !projectCustomerFilter || row.customer_id === projectCustomerFilter)
+                  .map((row) => {
+                    const company = customerRows.find((customerRow) => customerRow.id === row.customer_id);
+                    const statusLabel =
+                      row.status === "estimating" ? "見積中" :
+                      row.status === "active" ? "進行中" :
+                      row.status === "complete" ? "完了" :
+                      row.status === "lost" ? "見送り" : row.status;
+                    return (
+                      <div className="managementRow" key={row.id}>
+                        <span>{row.event_date ? row.event_date.replaceAll("-", "/") : "—"}</span>
+                        <strong>{row.name}</strong>
+                        <span>{company?.name || "—"}</span>
+                        <span>{row.venue || "—"}</span>
+                        <span className={"statusTag status-" + row.status}>{statusLabel}</span>
+                        <button onClick={() => openProject(row)}>書類を開く</button>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
     </main>
   );
 }
