@@ -145,6 +145,7 @@ export default function Home() {
   const [notes, setNotes] = useState("");
   const [projectId, setProjectId] = useState<string | null>(null);
   const [documentId, setDocumentId] = useState<string | null>(null);
+  const [parentDocumentId, setParentDocumentId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState("");
   const [binderDocuments, setBinderDocuments] = useState<BinderDocument[]>([]);
@@ -231,6 +232,7 @@ export default function Home() {
   const loadDocument = async (document: BinderDocument) => {
     setDocumentId(document.id);
     setProjectId(document.project_id);
+    setParentDocumentId(null);
     setCustomer(document.customer_name ?? "");
     setSubject(document.subject ?? "");
     setInvoiceNo(document.document_number ?? "");
@@ -338,7 +340,30 @@ export default function Home() {
     setItems([blankItem()]);
     setProjectId(null);
     setDocumentId(null);
+    setParentDocumentId(null);
     setSaveState("idle");
+  };
+
+  const deriveDocument = (targetType: DocumentType) => {
+    if (!projectId || !documentId) return;
+
+    setParentDocumentId(documentId);
+    setDocumentId(null);
+    setDocumentType(targetType);
+    setInvoiceNo("");
+    setIssueDate(new Date().toISOString().slice(0, 10));
+    setSaveState("idle");
+    setSaveError("");
+
+    if (targetType === "delivery") {
+      setFirstMeta(eventDate);
+      setSecondMeta(venue);
+      setThirdMeta("");
+    } else if (targetType === "invoice") {
+      setFirstMeta(eventDate);
+      setSecondMeta(venue);
+      setThirdMeta("");
+    }
   };
 
   const saveDocument = async () => {
@@ -406,6 +431,7 @@ export default function Home() {
       const documentPayload = {
         project_id: savedProjectId,
         document_type: documentType,
+        parent_document_id: parentDocumentId,
         document_number: invoiceNo.trim() || null,
         issue_date: issueDate || null,
         subject: subject.trim(),
@@ -432,6 +458,7 @@ export default function Home() {
         if (createDocumentError) throw createDocumentError;
         savedDocumentId = createdDocument.id;
         setDocumentId(savedDocumentId);
+        setParentDocumentId(null);
       } else {
         const { error: updateDocumentError } = await supabase
           .from("documents")
@@ -588,6 +615,23 @@ export default function Home() {
           />
         </label>
         {projectId && <span className="projectLinked">案件に接続中</span>}
+        {projectId && documentId && documentType === "estimate" && (
+          <div className="projectActions">
+            <button type="button" onClick={() => deriveDocument("delivery")}>
+              この案件から納品書
+            </button>
+            <button type="button" onClick={() => deriveDocument("invoice")}>
+              この案件から請求書
+            </button>
+          </div>
+        )}
+        {projectId && documentId && documentType === "delivery" && (
+          <div className="projectActions">
+            <button type="button" onClick={() => deriveDocument("invoice")}>
+              この案件から請求書
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="workspace">
