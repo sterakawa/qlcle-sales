@@ -78,6 +78,7 @@ type BinderDocument = {
   second_meta: string | null;
   third_meta: string | null;
   notes: string | null;
+  revision: number | null;
 };
 
 const itemPresets = [
@@ -146,6 +147,7 @@ export default function Home() {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [documentId, setDocumentId] = useState<string | null>(null);
   const [parentDocumentId, setParentDocumentId] = useState<string | null>(null);
+  const [revision, setRevision] = useState(1);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState("");
   const [binderDocuments, setBinderDocuments] = useState<BinderDocument[]>([]);
@@ -214,7 +216,7 @@ export default function Home() {
 
     const { data, error } = await supabase
       .from("documents")
-      .select("id, project_id, document_type, document_number, issue_date, subject, customer_name, first_meta, second_meta, third_meta, notes")
+      .select("id, project_id, document_type, document_number, issue_date, subject, customer_name, first_meta, second_meta, third_meta, notes, revision")
       .eq("document_type", type)
       .order("issue_date", { ascending: false })
       .order("created_at", { ascending: false });
@@ -233,6 +235,7 @@ export default function Home() {
     setDocumentId(document.id);
     setProjectId(document.project_id);
     setParentDocumentId(null);
+    setRevision(document.revision ?? 1);
     setCustomer(document.customer_name ?? "");
     setSubject(document.subject ?? "");
     setInvoiceNo(document.document_number ?? "");
@@ -341,7 +344,36 @@ export default function Home() {
     setProjectId(null);
     setDocumentId(null);
     setParentDocumentId(null);
+    setRevision(1);
     setSaveState("idle");
+  };
+
+  const reviseEstimate = async () => {
+    if (!projectId || !documentId || documentType !== "estimate") return;
+
+    const { data, error } = await supabase
+      .from("documents")
+      .select("revision")
+      .eq("project_id", projectId)
+      .eq("document_type", "estimate")
+      .order("revision", { ascending: false })
+      .limit(1);
+
+    if (error) {
+      console.error("reviseEstimate failed", error);
+      setSaveError(error.message);
+      setSaveState("error");
+      return;
+    }
+
+    const latestRevision = Number(data?.[0]?.revision ?? revision ?? 1);
+
+    setParentDocumentId(documentId);
+    setDocumentId(null);
+    setRevision(latestRevision + 1);
+    setIssueDate(new Date().toISOString().slice(0, 10));
+    setSaveState("idle");
+    setSaveError("");
   };
 
   const deriveDocument = (targetType: DocumentType) => {
@@ -350,6 +382,7 @@ export default function Home() {
     setParentDocumentId(documentId);
     setDocumentId(null);
     setDocumentType(targetType);
+    setRevision(1);
     setInvoiceNo("");
     setIssueDate(new Date().toISOString().slice(0, 10));
     setSaveState("idle");
@@ -432,6 +465,7 @@ export default function Home() {
         project_id: savedProjectId,
         document_type: documentType,
         parent_document_id: parentDocumentId,
+        revision,
         document_number: invoiceNo.trim() || null,
         issue_date: issueDate || null,
         subject: subject.trim(),
@@ -617,6 +651,9 @@ export default function Home() {
         {projectId && <span className="projectLinked">案件に接続中</span>}
         {projectId && documentId && documentType === "estimate" && (
           <div className="projectActions">
+            <button type="button" onClick={reviseEstimate}>
+              この見積を改訂
+            </button>
             <button type="button" onClick={() => deriveDocument("delivery")}>
               この案件から納品書
             </button>
@@ -624,6 +661,9 @@ export default function Home() {
               この案件から請求書
             </button>
           </div>
+        )}
+        {projectId && documentType === "estimate" && revision > 1 && !documentId && (
+          <span className="revisionBadge">改訂 v{revision}</span>
         )}
         {projectId && documentId && documentType === "delivery" && (
           <div className="projectActions">
@@ -916,7 +956,12 @@ export default function Home() {
                     onClick={() => loadDocument(document)}
                   >
                     <span className="binderDate">{date}</span>
-                    <span className="binderCustomer">{document.customer_name || "名称未設定"}</span>
+                    <span className="binderCustomer">
+                      {document.customer_name || "名称未設定"}
+                      {document.document_type === "estimate" && (document.revision ?? 1) > 1
+                        ? `  v${document.revision}`
+                        : ""}
+                    </span>
                   </button>
                 );
               })
