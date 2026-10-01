@@ -165,6 +165,10 @@ export default function Home() {
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
   const [newCustomerEmail, setNewCustomerEmail] = useState("");
   const [newCustomerAddress, setNewCustomerAddress] = useState("");
+  const [newProjectCustomerId, setNewProjectCustomerId] = useState("");
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectDate, setNewProjectDate] = useState("");
+  const [newProjectVenue, setNewProjectVenue] = useState("");
   const [customer, setCustomer] = useState("株式会社マイナビ");
   const [projectName, setProjectName] = useState("イベント運営費");
   const [eventDate, setEventDate] = useState("");
@@ -299,8 +303,33 @@ export default function Home() {
     setManagementLoading(false);
   };
 
+  const createProject = async () => {
+    if (!newProjectName.trim() || !newProjectCustomerId) return;
+
+    setManagementLoading(true);
+    const { error } = await supabase.from("projects").insert({
+      customer_id: projectCustomerFilter || newProjectCustomerId,
+      name: newProjectName.trim(),
+      event_date: newProjectDate || null,
+      venue: newProjectVenue.trim() || null,
+      status: "estimating",
+    });
+
+    if (error) {
+      console.error("createProject failed", error);
+    } else {
+      setNewProjectName("");
+      setNewProjectDate("");
+      setNewProjectVenue("");
+      if (!projectCustomerFilter) setNewProjectCustomerId("");
+      await loadProjects();
+    }
+    setManagementLoading(false);
+  };
+
   const showCustomerProjects = (customerId: string) => {
     setProjectCustomerFilter(customerId);
+    setNewProjectCustomerId(customerId);
     setAppMode("projects");
   };
 
@@ -1128,6 +1157,7 @@ export default function Home() {
               </div>
               <span>{customerRows.length}社</span>
             </div>
+            <div className="createSectionTitle">＋ 新しい取引先</div>
             <div className="customerCreate">
               <input placeholder="会社名" value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} />
               <input placeholder="担当者" value={newCustomerContact} onChange={(e) => setNewCustomerContact(e.target.value)} />
@@ -1170,6 +1200,44 @@ export default function Home() {
                 {projectCustomerFilter && <button onClick={() => setProjectCustomerFilter(null)}>すべて表示</button>}
                 <span>{projectRows.filter((p) => !projectCustomerFilter || p.customer_id === projectCustomerFilter).length}件</span>
               </div>
+            </div>
+            <div className="createSectionTitle">＋ 新しい案件</div>
+            <div className="projectCreate">
+              <select
+                value={projectCustomerFilter || newProjectCustomerId}
+                onChange={(e) => setNewProjectCustomerId(e.target.value)}
+                disabled={Boolean(projectCustomerFilter)}
+              >
+                <option value="">取引先を選択</option>
+                {customerRows.map((row) => (
+                  <option key={row.id} value={row.id}>{row.name}</option>
+                ))}
+              </select>
+              <input
+                placeholder="案件名"
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+              />
+              <input
+                type="date"
+                value={newProjectDate}
+                onChange={(e) => setNewProjectDate(e.target.value)}
+              />
+              <input
+                placeholder="会場"
+                value={newProjectVenue}
+                onChange={(e) => setNewProjectVenue(e.target.value)}
+              />
+              <button
+                onClick={createProject}
+                disabled={
+                  managementLoading ||
+                  !newProjectName.trim() ||
+                  !(projectCustomerFilter || newProjectCustomerId)
+                }
+              >
+                ＋ 案件を追加
+              </button>
             </div>
             {managementLoading && projectRows.length === 0 ? (
               <div className="managementEmpty">読込中...</div>
