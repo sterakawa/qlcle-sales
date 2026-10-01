@@ -26,7 +26,17 @@ type ProjectRow = {
   status: string;
   event_date: string | null;
   venue: string | null;
+  equipment_check_url: string | null;
   updated_at: string | null;
+};
+
+type ProjectStaffRow = {
+  id: string;
+  project_id: string;
+  name: string;
+  role: string | null;
+  meet_time: string | null;
+  note: string | null;
 };
 
 const documentConfig = {
@@ -169,6 +179,13 @@ export default function Home() {
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDate, setNewProjectDate] = useState("");
   const [newProjectVenue, setNewProjectVenue] = useState("");
+  const [selectedPrepProjectId, setSelectedPrepProjectId] = useState<string | null>(null);
+  const [projectStaffRows, setProjectStaffRows] = useState<ProjectStaffRow[]>([]);
+  const [staffName, setStaffName] = useState("");
+  const [staffRole, setStaffRole] = useState("オペレーター");
+  const [staffMeetTime, setStaffMeetTime] = useState("");
+  const [staffNote, setStaffNote] = useState("");
+  const [equipmentCheckUrl, setEquipmentCheckUrl] = useState("");
   const [customer, setCustomer] = useState("株式会社マイナビ");
   const [projectName, setProjectName] = useState("イベント運営費");
   const [eventDate, setEventDate] = useState("");
@@ -266,7 +283,7 @@ export default function Home() {
     setManagementLoading(true);
     const { data, error } = await supabase
       .from("projects")
-      .select("id, customer_id, name, status, event_date, venue, updated_at")
+      .select("id, customer_id, name, status, event_date, venue, equipment_check_url, updated_at")
       .order("event_date", { ascending: false, nullsFirst: false })
       .order("updated_at", { ascending: false });
 
@@ -435,6 +452,83 @@ export default function Home() {
       await loadProjects();
     }
     setManagementLoading(false);
+  };
+
+  const loadProjectStaff = async (projectId: string) => {
+    const { data, error } = await supabase
+      .from("project_staff")
+      .select("id, project_id, name, role, meet_time, note")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("loadProjectStaff failed", error);
+      setProjectStaffRows([]);
+      return;
+    }
+    setProjectStaffRows((data ?? []) as ProjectStaffRow[]);
+  };
+
+  const openProjectPrep = async (project: ProjectRow) => {
+    if (selectedPrepProjectId === project.id) {
+      setSelectedPrepProjectId(null);
+      return;
+    }
+    setSelectedPrepProjectId(project.id);
+    setEquipmentCheckUrl(project.equipment_check_url ?? "");
+    await loadProjectStaff(project.id);
+  };
+
+  const addProjectStaff = async () => {
+    if (!selectedPrepProjectId || !staffName.trim()) return;
+
+    setManagementLoading(true);
+    const { error } = await supabase.from("project_staff").insert({
+      project_id: selectedPrepProjectId,
+      name: staffName.trim(),
+      role: staffRole.trim() || null,
+      meet_time: staffMeetTime || null,
+      note: staffNote.trim() || null,
+    });
+
+    if (error) {
+      console.error("addProjectStaff failed", error);
+    } else {
+      setStaffName("");
+      setStaffMeetTime("");
+      setStaffNote("");
+      await loadProjectStaff(selectedPrepProjectId);
+    }
+    setManagementLoading(false);
+  };
+
+  const deleteProjectStaff = async (row: ProjectStaffRow) => {
+    const ok = window.confirm(`${row.name} をこの案件の出動スタッフから外しますか？`);
+    if (!ok) return;
+
+    const { error } = await supabase.from("project_staff").delete().eq("id", row.id);
+    if (error) {
+      console.error("deleteProjectStaff failed", error);
+      return;
+    }
+    await loadProjectStaff(row.project_id);
+  };
+
+  const saveEquipmentCheckUrl = async () => {
+    if (!selectedPrepProjectId) return;
+    const { error } = await supabase
+      .from("projects")
+      .update({
+        equipment_check_url: equipmentCheckUrl.trim() || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", selectedPrepProjectId);
+
+    if (error) {
+      console.error("saveEquipmentCheckUrl failed", error);
+      return;
+    }
+    await loadProjects();
   };
 
   const showCustomerProjects = (customerId: string) => {
@@ -1386,6 +1480,9 @@ export default function Home() {
                           <option value="lost">見送り</option>
                         </select>
                         <div className="rowActions">
+                          <button onClick={() => openProjectPrep(row)}>
+                            {selectedPrepProjectId === row.id ? "準備を閉じる" : "準備"}
+                          </button>
                           <button onClick={() => openProject(row)}>書類を開く</button>
                           <button onClick={() => editProject(row)}>編集</button>
                           <button className="dangerMini" onClick={() => deleteProject(row)}>削除</button>
@@ -1395,6 +1492,74 @@ export default function Home() {
                   })}
               </div>
             )}
+
+            {selectedPrepProjectId && (() => {
+              const prepProject = projectRows.find((row) => row.id === selectedPrepProjectId);
+              if (!prepProject) return null;
+              return (
+                <div className="prepPanel">
+                  <div className="prepHead">
+                    <div>
+                      <div className="managementEyebrow">FIELD PREPARATION</div>
+                      <h3>{prepProject.name}</h3>
+                    </div>
+                    <span>{prepProject.event_date ? prepProject.event_date.replaceAll("-", "/") : "実施日未定"}</span>
+                  </div>
+
+                  <div className="prepGrid">
+                    <section className="prepSection">
+                      <h4>出動スタッフ</h4>
+                      <div className="staffCreate">
+                        <input placeholder="氏名" value={staffName} onChange={(e) => setStaffName(e.target.value)} />
+                        <select value={staffRole} onChange={(e) => setStaffRole(e.target.value)}>
+                          <option>オペレーター</option>
+                          <option>カメラマン</option>
+                          <option>設営</option>
+                          <option>その他</option>
+                        </select>
+                        <input type="time" value={staffMeetTime} onChange={(e) => setStaffMeetTime(e.target.value)} />
+                        <input placeholder="備考" value={staffNote} onChange={(e) => setStaffNote(e.target.value)} />
+                        <button onClick={addProjectStaff} disabled={!staffName.trim() || managementLoading}>＋ 追加</button>
+                      </div>
+
+                      <div className="staffList">
+                        {projectStaffRows.length === 0 ? (
+                          <div className="managementEmpty compactEmpty">まだスタッフは登録されていません</div>
+                        ) : (
+                          projectStaffRows.map((row) => (
+                            <div className="staffRow" key={row.id}>
+                              <strong>{row.name}</strong>
+                              <span>{row.role || "—"}</span>
+                              <span>{row.meet_time ? row.meet_time.slice(0, 5) + "集合" : "集合時間未定"}</span>
+                              <span>{row.note || ""}</span>
+                              <button className="dangerMini" onClick={() => deleteProjectStaff(row)}>外す</button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </section>
+
+                    <section className="prepSection">
+                      <h4>機材チェック</h4>
+                      <p>機材チェックリストで作成した案件URLを保存します。</p>
+                      <input
+                        className="equipmentUrlInput"
+                        type="url"
+                        placeholder="https://..."
+                        value={equipmentCheckUrl}
+                        onChange={(e) => setEquipmentCheckUrl(e.target.value)}
+                      />
+                      <div className="equipmentActions">
+                        <button onClick={saveEquipmentCheckUrl}>URLを保存</button>
+                        {equipmentCheckUrl.trim() && (
+                          <a href={equipmentCheckUrl.trim()} target="_blank" rel="noreferrer">機材チェックを開く ↗</a>
+                        )}
+                      </div>
+                    </section>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </section>
       )}
