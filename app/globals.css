@@ -1579,3 +1579,128 @@ h1 {
     display: none !important;
   }
 }
+
+
+/* Mobile management views */
+@media (max-width: 700px) {
+  .shell {
+    padding: 12px;
+  }
+
+  .toolbar {
+    margin-bottom: 10px;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .toolbar h1 {
+    font-size: 22px;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .appNav {
+    gap: 2px;
+    margin-top: 6px;
+  }
+
+  .appNav button {
+    padding: 6px 9px;
+    font-size: 12px;
+  }
+
+  .managementShell {
+    width: 100%;
+  }
+
+  .managementCard {
+    padding: 14px;
+    border-radius: 8px;
+  }
+
+  .managementHead {
+    align-items: center;
+    padding-bottom: 12px;
+  }
+
+  .managementHead h2 {
+    font-size: 18px;
+  }
+
+  .customerCreate {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px 0 14px;
+  }
+
+  .customerCreate .wide {
+    grid-column: auto;
+  }
+
+  .customerCreate input,
+  .customerCreate button {
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .managementTable {
+    display: grid;
+    gap: 10px;
+    overflow: visible;
+    margin-top: 12px;
+  }
+
+  .managementRow.header {
+    display: none;
+  }
+
+  .managementRow,
+  .customerTable .managementRow,
+  .projectTable .managementRow {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 5px;
+    padding: 12px;
+    border: 1px solid #e3ded6;
+    border-radius: 8px;
+    background: #fcfbf9;
+  }
+
+  .managementRow strong {
+    font-size: 14px;
+    white-space: normal;
+  }
+
+  .managementRow span {
+    overflow-wrap: anywhere;
+  }
+
+  .managementRow button {
+    justify-self: stretch;
+    width: 100%;
+    margin-top: 5px;
+    min-height: 36px;
+  }
+
+  .projectTable .managementRow > span:first-child {
+    color: #6f6961;
+    font-size: 11px;
+    order: -1;
+  }
+
+  .statusTag {
+    margin-top: 2px;
+  }
+
+  .managementHeadActions {
+    gap: 6px;
+  }
+
+  .managementHeadActions button {
+    padding: 6px 8px;
+  }
+}
