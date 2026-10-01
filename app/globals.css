@@ -1316,3 +1316,39 @@ h1 {
     display: none !important;
   }
 }
+
+
+.projectActions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.projectActions button {
+  border: 1px solid #bcb6ad;
+  background: #fff;
+  color: #3f3b36;
+  border-radius: 6px;
+  padding: 6px 9px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.projectActions button:hover {
+  border-color: #77716a;
+  background: #faf9f6;
+}
+
+@media (max-width: 900px) {
+  .projectActions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media print {
+  .projectActions {
+    display: none !important;
+  }
+}
