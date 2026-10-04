@@ -2024,3 +2024,26 @@ h1 {
     text-align: center;
   }
 }
+
+
+/* Project selector in document view */
+.projectBar select {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-bottom: 1px solid #bdb7ae;
+  padding: 5px 2px;
+  background: transparent;
+  font: inherit;
+  color: #222;
+}
+
+.projectBar select:focus {
+  outline: none;
+  border-bottom-color: #222;
+}
+
+.projectBar input[readonly] {
+  color: #5f5a52;
+  cursor: default;
+}
