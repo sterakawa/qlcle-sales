@@ -321,7 +321,7 @@ export default function Home() {
   };
 
   const createProject = async () => {
-    if (!newProjectName.trim() || !newProjectCustomerId) return;
+    if (!newProjectName.trim() || !(projectCustomerFilter || newProjectCustomerId)) return;
 
     setManagementLoading(true);
     const { error } = await supabase.from("projects").insert({
@@ -542,6 +542,8 @@ export default function Home() {
       .from("documents")
       .select("id, project_id, document_type, document_number, issue_date, subject, customer_name, first_meta, second_meta, third_meta, notes, revision")
       .eq("project_id", project.id)
+      .eq("document_type", "estimate")
+      .order("revision", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(1);
 
@@ -552,23 +554,50 @@ export default function Home() {
 
     setAppMode("documents");
     setProjectCustomerFilter(null);
+    setDocumentType("estimate");
 
-    const latest = (docs?.[0] ?? null) as BinderDocument | null;
-    if (latest) {
-      setDocumentType(latest.document_type);
-      await loadDocument(latest);
+    const latestEstimate = (docs?.[0] ?? null) as BinderDocument | null;
+    if (latestEstimate) {
+      await loadDocument(latestEstimate);
       return;
     }
 
     const customerRow = customerRows.find((row) => row.id === project.customer_id);
-    setDocumentType("estimate");
     resetInvoice();
+    setDocumentType("estimate");
     setProjectId(project.id);
     setProjectName(project.name);
     setEventDate(project.event_date ?? "");
     setVenue(project.venue ?? "");
     setCustomer(customerRow?.name ?? "");
     setSubject(project.name);
+  };
+
+  const selectProjectForDocument = (selectedProjectId: string) => {
+    if (!selectedProjectId) {
+      setProjectId(null);
+      setProjectName("");
+      setEventDate("");
+      setVenue("");
+      return;
+    }
+
+    const project = projectRows.find((row) => row.id === selectedProjectId);
+    if (!project) return;
+
+    const customerRow = customerRows.find((row) => row.id === project.customer_id);
+
+    setProjectId(project.id);
+    setProjectName(project.name);
+    setEventDate(project.event_date ?? "");
+    setVenue(project.venue ?? "");
+    setCustomer(customerRow?.name ?? "");
+    if (!subject.trim()) setSubject(project.name);
+    setDocumentId(null);
+    setParentDocumentId(null);
+    setRevision(1);
+    setSaveState("idle");
+    setSaveError("");
   };
 
   const loadBinderDocuments = async (type: DocumentType = documentType) => {
@@ -650,6 +679,7 @@ export default function Home() {
     if (session) {
       loadBinderDocuments(documentType);
       loadCustomers();
+      loadProjects();
     }
   }, [session, documentType]);
 
@@ -1001,27 +1031,37 @@ export default function Home() {
       )}
       <div className="projectBar">
         <label>
-          案件名
-          <input
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            placeholder="例：マイナビ就職EXPO"
-          />
+          案件
+          <select
+            value={projectId ?? ""}
+            onChange={(e) => selectProjectForDocument(e.target.value)}
+          >
+            <option value="">案件を選択</option>
+            {projectRows.map((project) => {
+              const date = project.event_date ? project.event_date.replaceAll("-", "/") : "日付未定";
+              const company = customerRows.find((row) => row.id === project.customer_id);
+              return (
+                <option key={project.id} value={project.id}>
+                  {date}｜{project.name}{company ? `｜${company.name}` : ""}
+                </option>
+              );
+            })}
+          </select>
         </label>
         <label>
           開催日
           <input
             type="date"
             value={eventDate}
-            onChange={(e) => setEventDate(e.target.value)}
+            readOnly
           />
         </label>
         <label>
           会場
           <input
             value={venue}
-            onChange={(e) => setVenue(e.target.value)}
-            placeholder="例：名古屋"
+            readOnly
+            placeholder="会場未設定"
           />
         </label>
         {projectId && <span className="projectLinked">案件に接続中</span>}
@@ -1483,7 +1523,7 @@ export default function Home() {
                           <button onClick={() => openProjectPrep(row)}>
                             {selectedPrepProjectId === row.id ? "準備を閉じる" : "準備"}
                           </button>
-                          <button onClick={() => openProject(row)}>書類を開く</button>
+                          <button onClick={() => openProject(row)}>見積書を開く</button>
                           <button onClick={() => editProject(row)}>編集</button>
                           <button className="dangerMini" onClick={() => deleteProject(row)}>削除</button>
                         </div>
