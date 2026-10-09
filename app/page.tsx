@@ -1098,9 +1098,11 @@ export default function Home() {
               <label>請求先</label>
               <select value={customer} onChange={(e) => setCustomer(e.target.value)}>
                 <option value="">選択してください</option>
-                <option>株式会社マイナビ</option>
-                <option>株式会社○○イベント</option>
-                <option>△△株式会社</option>
+                {customerRows.map((row) => (
+                  <option key={row.id} value={row.name}>
+                    {row.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="metaGrid">
